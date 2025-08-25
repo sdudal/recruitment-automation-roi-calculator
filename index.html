@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recruiting ROI Calculator</title>
+  <style>
+    :root{
+      --bg:#f8fafc; /* slate-50 */
+      --card:#ffffff;
+      --text:#0f172a; /* slate-900 */
+      --muted:#64748b; /* slate-500 */
+      --border:#e2e8f0; /* slate-200 */
+      --accent:#0ea5e9; /* sky-500 */
+      --radius:16px;
+      --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 24px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .container{max-width:1400px;margin:0 auto;padding:16px}
+    header{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:5}
+    header .container{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 16px;flex-wrap:wrap}
+    @media (max-width:768px){header .container{flex-direction:column;text-align:center;gap:12px}}
+    h1{font-size:20px;margin:0}
+    @media (max-width:600px){h1{font-size:18px}}
+    .sub{color:var(--muted);font-size:12px}
+    @media (max-width:600px){.sub{font-size:11px}}
+    .row{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width:768px){.row{grid-template-columns:1fr 1.5fr}}
+    @media (min-width:1200px){.row{grid-template-columns:1fr 2fr}}
+    section.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+    section.card h2{margin:0 0 8px 0;font-size:16px}
+    label{display:flex;flex-direction:column;gap:6px}
+    label span{color:#475569;font-size:12px}
+    input[type="number"],select{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:14px;min-width:0}
+    input[type="range"]{width:100%}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid var(--border);text-align:left}
+    th{color:#475569;font-weight:600}
+    .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media (max-width:480px){.grid2{grid-template-columns:1fr}}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media (max-width:600px){.grid3{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:480px){.grid3{grid-template-columns:1fr}}
+    .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media (min-width:768px){.grid6{grid-template-columns:repeat(6,1fr)}}
+    @media (max-width:480px){.grid6{grid-template-columns:1fr}}
+    .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media (min-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:480px){.kpis{grid-template-columns:1fr}}
+    .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+    .kpi .label{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+    .kpi .value{font-size:22px;font-weight:700;margin:6px 0 2px}
+    .kpi .hint{color:#475569;font-size:12px}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    @media (max-width:768px){.controls{justify-content:center;margin-top:8px}}
+    button{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
+    button:hover{background:#f1f5f9}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:#334155}
+    .bar{height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:var(--accent)}
+    .w{width:70px;padding:4px 6px;font-size:12px}
+    footer{color:#64748b;text-align:center;padding:24px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div>
+        <h1>Recruiting ROI Calculator</h1>
+        <div class="sub">Calculate true ROI: (Benefits - Platform Cost) / Platform Cost × 100 (24.9 hrs baseline per hire)</div>
+      </div>
+      <div class="controls">
+        <select id="currency">
+          <option value="EUR">€ EUR</option>
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="PLN">zł PLN</option>
+        </select>
+        <button id="resetBtn">Reset to proposal</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top:16px">
+    <div class="row">
+      <!-- LEFT: Inputs -->
+      <div>
+        <section class="card">
+          <h2>Recruiting Parameters</h2>
+          <div class="grid2">
+            <label>
+              <span>Number of positions per year</span>
+              <input id="annualVolume" type="number" min="0" placeholder="e.g. 100" />
+            </label>
+            <label>
+              <span>Average time-to-fill (in days)</span>
+              <input id="avgTTF" type="number" min="1" />
+            </label>
+          </div>
+          <div style="margin-top:12px">
+            <label>
+              <span>Cost per hire</span>
+              <input id="baseCostPerHire" type="number" min="0" placeholder="Can be a lump sum or calculated" />
+            </label>
+          </div>
+          <div style="margin-top:12px">
+            <label>
+              <span>Annual platform cost</span>
+              <input id="platformCostAnnual" type="number" min="0" placeholder="Yearly cost of automation platform" />
+            </label>
+          </div>
+        </section>
+
+
+
+
+      </div>
+
+            <!-- RIGHT: ROI Results -->
+      <div>
+        <!-- Main ROI Display -->
+        <section class="card">
+          <div style="text-align:center;padding:20px">
+            <div class="label" style="color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:14px;margin-bottom:8px">Annual ROI</div>
+            <div style="font-size:48px;font-weight:700;color:var(--accent);margin-bottom:8px" id="roiPct">0%</div>
+            <div style="font-size:18px;color:var(--text);margin-bottom:8px">
+              Annual Benefits: <span id="annualSavings">€0</span>
+          </div>
+            <div style="font-size:14px;color:var(--muted);margin-bottom:8px">
+              Investment Cost: <span id="investmentCost">€0</span>
+          </div>
+            <div style="font-size:14px;color:var(--muted)">
+              Payback: <span id="paybackMonths">0</span> months
+          </div>
+          </div>
+        </section>
+
+        <!-- Key Metrics -->
+        <section class="kpis" style="margin-top:16px">
+          <div class="kpi">
+            <div class="label">Workload Reduction</div>
+            <div class="value"><span id="workloadReductionPct">0</span>%</div>
+            <div class="hint"><span id="hoursSavedPerHire">0</span> hrs saved/hire</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Time-to-Fill Improvement</div>
+            <div class="value">-<span id="daysSavedPerHire">0</span> days</div>
+            <div class="hint">From <span id="ttfBase">0</span> to <span id="ttfNew">0</span> days</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Cost per Hire Reduction</div>
+            <div class="value"><span id="automatedCostPerHire">€0</span></div>
+            <div class="hint">vs <span id="manualCostPerHire">€0</span> baseline</div>
+          </div>
+        </section>
+
+        <!-- Show Details Button -->
+        <section class="card" style="margin-top:16px;text-align:center">
+          <button id="toggleDetailsBtn" style="background:var(--accent);color:white;border:none;padding:12px 24px;font-size:16px;font-weight:600">
+            Show Details
+          </button>
+        </section>
+
+        <!-- Details Section (Hidden by default) -->
+        <div id="detailsSection" style="display:none">
+          <!-- Module Controls -->
+          <section class="card" style="margin-top:16px">
+            <h2>Module Configuration</h2>
+            <div class="grid2" style="gap:12px" id="moduleToggles"></div>
+          </section>
+
+                    <!-- Detailed Module Breakdown -->
+          <section class="card" style="margin-top:16px">
+            <h2>Detailed Module Analysis</h2>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <table style="min-width:600px;font-size:12px">
+              <thead>
+                <tr>
+                  <th>Module</th>
+                    <th>Workload %</th>
+                    <th>Savings %</th>
+                    <th>Annual Value</th>
+                </tr>
+              </thead>
+                <tbody id="detailedModulesBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+          <!-- Sub-Module Details -->
+          <section class="card" style="margin-top:16px">
+            <h2>Sub-Module Breakdown</h2>
+            <div id="subModuleDetails"></div>
+        </section>
+        </div>
+
+        <footer style="margin-top:20px">Select automation modules to see savings vs. full baseline workload. Adjust parameters to match your recruiting process.</footer>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== Utilities =====
+    const CURRENCIES = [
+      { code: 'EUR', symbol: '€' },
+      { code: 'USD', symbol: '$' },
+      { code: 'GBP', symbol: '£' },
+      { code: 'PLN', symbol: 'zł' },
+    ];
+    function fmtCurrency(n, code){
+      try{
+        return new Intl.NumberFormat(undefined,{style:'currency',currency:code,maximumFractionDigits:0}).format(n);
+      }catch(e){
+        return `${(n||0).toLocaleString()} ${code}`;
+      }
+    }
+    function clamp(n,min,max){return Math.max(min, Math.min(max, n));}
+
+    // ===== State (defaults aligned to proposal) =====
+    const state = {
+      currency: 'EUR',
+      annualVolume: 120,
+      avgTTF: 36,
+      baseCostPerHire: 4000,
+      platformCostAnnual: 50000, // Annual platform cost for automation
+      modules: [
+        {
+          key: 'prescreen', name: 'Pre-Screening Assistant', enabled: true, totalHours: 4.5,
+          subModules: [
+            { name: 'Knock-out questions & eligibility checks', effortHours: 1.5, savingsPct: 70 },
+            { name: 'CV keyword/skill checks', effortHours: 1.5, savingsPct: 60 },
+            { name: 'Auto Q&A for candidates', effortHours: 0.8, savingsPct: 50 },
+            { name: 'Routing to correct recruiter/role', effortHours: 0.4, savingsPct: 70 },
+            { name: 'Pre-screen summaries', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'resume', name: 'Resume Structuring', enabled: true, totalHours: 3,
+          subModules: [
+            { name: 'Parsing CVs into structured fields', effortHours: 1.2, savingsPct: 80 },
+            { name: 'Normalizing titles/skills', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Deduplication & profile merging', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Data quality checks', effortHours: 0.5, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'matching', name: 'Candidate Matching', enabled: true, totalHours: 3,
+          subModules: [
+            { name: 'Ranking against JD requirements', effortHours: 1.2, savingsPct: 70 },
+            { name: 'Surfacing similar candidates/pools', effortHours: 0.8, savingsPct: 60 },
+            { name: 'Gap analysis vs. must-haves', effortHours: 0.6, savingsPct: 50 },
+            { name: 'Auto-refreshing shortlists', effortHours: 0.4, savingsPct: 80 }
+          ]
+        },
+        {
+          key: 'interview', name: 'Interview Intelligence', enabled: true, totalHours: 2.2,
+          subModules: [
+            { name: 'Interview guides & scorecards', effortHours: 0.8, savingsPct: 60 },
+            { name: 'Suggested questions by JD', effortHours: 0.5, savingsPct: 50 },
+            { name: 'Feedback normalization', effortHours: 0.6, savingsPct: 60 },
+            { name: 'Red-flag detection', effortHours: 0.3, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'scheduling', name: 'Scheduling & Orchestration', enabled: true, totalHours: 4,
+          subModules: [
+            { name: 'Multi-participant coordination', effortHours: 1.5, savingsPct: 80 },
+            { name: 'Time-zone handling & rescheduling', effortHours: 1, savingsPct: 80 },
+            { name: 'Automated reminders & prep emails', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Room/VC setup & conflicts', effortHours: 0.4, savingsPct: 70 },
+            { name: 'Post-interview follow-ups', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'jobpost', name: 'Job Post Processing', enabled: true, totalHours: 2.2,
+          subModules: [
+            { name: 'JD drafting from intake notes', effortHours: 1, savingsPct: 70 },
+            { name: 'Tone/brand & readability checks', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Channel-ready variants', effortHours: 0.5, savingsPct: 70 },
+            { name: 'SEO/keyword optimization', effortHours: 0.2, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'reporting', name: 'Reporting & Predictive Insights', enabled: true, totalHours: 1.5,
+          subModules: [
+            { name: 'KPI dashboards', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Productivity analytics', effortHours: 0.3, savingsPct: 60 },
+            { name: 'Funnel drop-off analysis', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Cost per hire/source calcs', effortHours: 0.2, savingsPct: 60 },
+            { name: 'SLA alerts & trendlines', effortHours: 0.2, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'compliance', name: 'Compliance & Risk Review', enabled: true, totalHours: 1.5,
+          subModules: [
+            { name: 'Bias language detection', effortHours: 0.6, savingsPct: 70 },
+            { name: 'GDPR/EEOC checks', effortHours: 0.3, savingsPct: 60 },
+            { name: 'Audit trails', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Offer/comms compliance', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'forecast', name: 'Forecasting & Volume Simulation', enabled: true, totalHours: 1,
+          subModules: [
+            { name: 'Demand simulations', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Capacity planning', effortHours: 0.2, savingsPct: 60 },
+            { name: 'TTF projections', effortHours: 0.2, savingsPct: 50 },
+            { name: 'Scenario testing', effortHours: 0.2, savingsPct: 50 },
+            { name: 'What-if adoption modeling', effortHours: 0.1, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'onboarding', name: 'Onboarding Coordination', enabled: true, totalHours: 2,
+          subModules: [
+            { name: 'Document collection', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Checklists & welcome packs', effortHours: 0.6, savingsPct: 60 },
+            { name: 'Start-date confirmations', effortHours: 0.6, savingsPct: 60 }
+          ]
+        }
+      ],
+      showDetails: false
+    };
+
+    // ===== DOM refs =====
+    const el = {
+      currency: document.getElementById('currency'),
+      resetBtn: document.getElementById('resetBtn'),
+      annualVolume: document.getElementById('annualVolume'),
+      avgTTF: document.getElementById('avgTTF'),
+      baseCostPerHire: document.getElementById('baseCostPerHire'),
+      platformCostAnnual: document.getElementById('platformCostAnnual'),
+      // ROI Display
+      roiPct: document.getElementById('roiPct'),
+      annualSavings: document.getElementById('annualSavings'),
+      investmentCost: document.getElementById('investmentCost'),
+      paybackMonths: document.getElementById('paybackMonths'),
+      workloadReductionPct: document.getElementById('workloadReductionPct'),
+      hoursSavedPerHire: document.getElementById('hoursSavedPerHire'),
+      daysSavedPerHire: document.getElementById('daysSavedPerHire'),
+      ttfBase: document.getElementById('ttfBase'),
+      ttfNew: document.getElementById('ttfNew'),
+      manualCostPerHire: document.getElementById('manualCostPerHire'),
+      automatedCostPerHire: document.getElementById('automatedCostPerHire'),
+      // Details
+      toggleDetailsBtn: document.getElementById('toggleDetailsBtn'),
+      detailsSection: document.getElementById('detailsSection'),
+      moduleToggles: document.getElementById('moduleToggles'),
+      detailedModulesBody: document.getElementById('detailedModulesBody'),
+      subModuleDetails: document.getElementById('subModuleDetails'),
+    };
+
+    function setInputsFromState(){
+      el.currency.value = state.currency;
+      el.annualVolume.value = state.annualVolume;
+      el.avgTTF.value = state.avgTTF;
+      el.baseCostPerHire.value = state.baseCostPerHire;
+      el.platformCostAnnual.value = state.platformCostAnnual;
+    }
+
+    function attachInputHandlers(){
+      el.currency.addEventListener('change', () => {state.currency = el.currency.value; render();});
+      el.annualVolume.addEventListener('input', () => {state.annualVolume = +el.annualVolume.value||0; render();});
+      el.avgTTF.addEventListener('input', () => {state.avgTTF = +el.avgTTF.value||0; render();});
+      el.baseCostPerHire.addEventListener('input', () => {state.baseCostPerHire = +el.baseCostPerHire.value||0; render();});
+      el.platformCostAnnual.addEventListener('input', () => {state.platformCostAnnual = +el.platformCostAnnual.value||0; render();});
+      el.resetBtn.addEventListener('click', () => { Object.assign(state, defaultState()); setInputsFromState(); render(); });
+      el.toggleDetailsBtn.addEventListener('click', () => {
+        state.showDetails = !state.showDetails;
+        el.detailsSection.style.display = state.showDetails ? 'block' : 'none';
+        el.toggleDetailsBtn.textContent = state.showDetails ? 'Hide Details' : 'Show Details';
+        if (state.showDetails) renderDetails();
+      });
+    }
+
+    function defaultState(){
+      return {
+        currency: 'EUR',
+        annualVolume: 100,
+        avgTTF: 36,
+        baseCostPerHire: 4000,
+        platformCostAnnual: 50000,
+        modules: [
+          {
+            key: 'prescreen', name: 'Pre-Screening Assistant', enabled: true, totalHours: 4.5,
+            subModules: [
+              { name: 'Knock-out questions & eligibility checks', effortHours: 1.5, savingsPct: 70 },
+              { name: 'CV keyword/skill checks', effortHours: 1.5, savingsPct: 60 },
+              { name: 'Auto Q&A for candidates', effortHours: 0.8, savingsPct: 50 },
+              { name: 'Routing to correct recruiter/role', effortHours: 0.4, savingsPct: 70 },
+              { name: 'Pre-screen summaries', effortHours: 0.3, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'resume', name: 'Resume Structuring', enabled: true, totalHours: 3,
+            subModules: [
+              { name: 'Parsing CVs into structured fields', effortHours: 1.2, savingsPct: 80 },
+              { name: 'Normalizing titles/skills', effortHours: 0.8, savingsPct: 70 },
+              { name: 'Deduplication & profile merging', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Data quality checks', effortHours: 1, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'matching', name: 'Candidate Matching', enabled: true, totalHours: 3,
+            subModules: [
+              { name: 'Ranking against JD requirements', effortHours: 1.2, savingsPct: 70 },
+              { name: 'Surfacing similar candidates/pools', effortHours: 0.8, savingsPct: 60 },
+              { name: 'Gap analysis vs. must-haves', effortHours: 0.6, savingsPct: 50 },
+              { name: 'Auto-refreshing shortlists', effortHours: 0.4, savingsPct: 80 }
+            ]
+          },
+          {
+            key: 'interview', name: 'Interview Intelligence', enabled: true, totalHours: 2.2,
+            subModules: [
+              { name: 'Interview guides & scorecards', effortHours: 0.8, savingsPct: 60 },
+              { name: 'Suggested questions by JD', effortHours: 0.5, savingsPct: 50 },
+              { name: 'Feedback normalization', effortHours: 0.6, savingsPct: 60 },
+              { name: 'Red-flag detection', effortHours: 0.3, savingsPct: 50 }
+            ]
+          },
+          {
+            key: 'scheduling', name: 'Scheduling & Orchestration', enabled: true, totalHours: 4,
+            subModules: [
+              { name: 'Multi-participant coordination', effortHours: 1.5, savingsPct: 80 },
+              { name: 'Time-zone handling & rescheduling', effortHours: 1, savingsPct: 80 },
+              { name: 'Automated reminders & prep emails', effortHours: 0.8, savingsPct: 70 },
+              { name: 'Room/VC setup & conflicts', effortHours: 0.4, savingsPct: 70 },
+              { name: 'Post-interview follow-ups', effortHours: 0.3, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'jobpost', name: 'Job Post Processing', enabled: true, totalHours: 2.2,
+            subModules: [
+              { name: 'JD drafting from intake notes', effortHours: 1, savingsPct: 70 },
+              { name: 'Tone/brand & readability checks', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Channel-ready variants', effortHours: 0.5, savingsPct: 70 },
+              { name: 'SEO/keyword optimization', effortHours: 0.2, savingsPct: 50 }
+            ]
+          },
+          {
+            key: 'reporting', name: 'Reporting & Predictive Insights', enabled: true, totalHours: 1.5,
+            subModules: [
+              { name: 'KPI dashboards', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Productivity analytics', effortHours: 0.3, savingsPct: 60 },
+              { name: 'Funnel drop-off analysis', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Cost per hire/source calcs', effortHours: 0.2, savingsPct: 60 },
+              { name: 'SLA alerts & trendlines', effortHours: 0.5, savingsPct: 50 }
+            ]
+          },
+          {
+            key: 'compliance', name: 'Compliance & Risk Review', enabled: true, totalHours: 1.5,
+            subModules: [
+              { name: 'Bias language detection', effortHours: 0.6, savingsPct: 70 },
+              { name: 'GDPR/EEOC checks', effortHours: 0.3, savingsPct: 60 },
+              { name: 'Audit trails', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Offer/comms compliance', effortHours: 0.3, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'forecast', name: 'Forecasting & Volume Simulation', enabled: true, totalHours: 1,
+            subModules: [
+              { name: 'Demand simulations', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Capacity planning', effortHours: 0.2, savingsPct: 60 },
+              { name: 'TTF projections', effortHours: 0.2, savingsPct: 50 },
+              { name: 'Scenario testing', effortHours: 0.2, savingsPct: 50 },
+              { name: 'What-if adoption modeling', effortHours: 0.1, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'onboarding', name: 'Onboarding Coordination', enabled: true, totalHours: 2,
+            subModules: [
+              { name: 'Document collection', effortHours: 2, savingsPct: 50 },
+              { name: 'Checklists & welcome packs', effortHours: 0.6, savingsPct: 60 },
+              { name: 'Start-date confirmations', effortHours: 0.6, savingsPct: 60 }
+            ]
+          }
+        ],
+        showDetails: false
+      };
+    }
+
+    function renderDetails(){
+      renderModuleToggles();
+      renderDetailedModules();
+      renderSubModuleDetails();
+    }
+
+    function renderModuleToggles(){
+      el.moduleToggles.innerHTML = '';
+      state.modules.forEach((module, idx) => {
+        const button = document.createElement('button');
+        button.textContent = module.name;
+        button.style.cssText = `
+          padding: 12px 16px;
+          border: 2px solid ${module.enabled ? 'var(--accent)' : 'var(--border)'};
+          border-radius: 8px;
+          background: ${module.enabled ? 'var(--accent)' : 'transparent'};
+          color: ${module.enabled ? 'white' : 'var(--text)'};
+          font-size: 13px;
+          font-weight: ${module.enabled ? '600' : '400'};
+          cursor: pointer;
+          transition: all 0.2s ease;
+          width: 100%;
+          text-align: center;
+        `;
+        
+        // Hover effect
+        button.addEventListener('mouseenter', () => {
+          if (!module.enabled) {
+            button.style.borderColor = 'var(--accent)';
+            button.style.background = '#f0f9ff';
+          }
+        });
+        
+        button.addEventListener('mouseleave', () => {
+          if (!module.enabled) {
+            button.style.borderColor = 'var(--border)';
+            button.style.background = 'transparent';
+          }
+        });
+        
+        button.addEventListener('click', () => {
+          state.modules[idx].enabled = !state.modules[idx].enabled;
+          render();
+          if (state.showDetails) renderDetails();
+        });
+        
+        el.moduleToggles.appendChild(button);
+      });
+    }
+
+    function renderDetailedModules(){
+      el.detailedModulesBody.innerHTML = '';
+      const R = compute();
+      
+      // Calculate total baseline hours from all modules (consistent with compute function)
+      const totalBaselineHours = state.modules.reduce((sum, module) => sum + module.totalHours, 0);
+      
+      state.modules.forEach(module => {
+        if (!module.enabled) return;
+        
+        const hoursSaved = module.subModules.reduce((sum, sub) => sum + (sub.effortHours * sub.savingsPct / 100), 0);
+        const workloadPct = (module.totalHours / totalBaselineHours) * 100;
+        const savingsPct = (hoursSaved / module.totalHours) * 100;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${module.name}</td>
+          <td>${workloadPct.toFixed(1)}%</td>
+          <td>${savingsPct.toFixed(1)}%</td>
+          <td style="color:var(--accent)">${fmtCurrency(R.moduleImpacts[module.key] || 0, state.currency)}</td>
+        `;
+        el.detailedModulesBody.appendChild(tr);
+      });
+    }
+
+    function renderSubModuleDetails(){
+      el.subModuleDetails.innerHTML = '';
+      
+      state.modules.forEach(module => {
+        if (!module.enabled) return;
+        
+        const moduleDiv = document.createElement('div');
+        moduleDiv.style.marginBottom = '16px';
+        
+        let subModuleRows = '';
+        module.subModules.forEach(sub => {
+          const timeSaved = sub.effortHours * sub.savingsPct / 100;
+          subModuleRows += `
+            <tr>
+              <td style="padding-left:20px">${sub.name}</td>
+              <td>${sub.effortHours.toFixed(1)} hrs</td>
+              <td>${sub.savingsPct}%</td>
+              <td>${timeSaved.toFixed(1)} hrs</td>
+            </tr>
+          `;
+        });
+        
+        moduleDiv.innerHTML = `
+          <h4 style="margin:0 0 8px 0;color:var(--accent)">${module.name}</h4>
+          <table style="width:100%;font-size:11px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="text-align:left">Sub-Module</th>
+                <th style="text-align:center;width:80px">Effort</th>
+                <th style="text-align:center;width:80px">Savings %</th>
+                <th style="text-align:center;width:100px">Hours Saved</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${subModuleRows}
+            </tbody>
+          </table>
+        `;
+        el.subModuleDetails.appendChild(moduleDiv);
+      });
+    }
+
+    function compute(){
+      const s = state;
+      
+      // Calculate baseline total workload hours from ALL modules (regardless of enabled status)
+      const totalWorkloadHours = s.modules.reduce((sum, module) => sum + module.totalHours, 0);
+      
+      // Calculate time savings only from ENABLED modules
+      let totalHoursSaved = 0;
+      let moduleImpacts = {};
+      
+      s.modules.forEach(module => {
+        // Calculate module's potential hours saved
+        const moduleHoursSaved = module.subModules.reduce((sum, sub) => {
+          return sum + (sub.effortHours * sub.savingsPct / 100);
+        }, 0);
+        
+        if (module.enabled) {
+          // Only add to total savings if module is enabled
+          totalHoursSaved += moduleHoursSaved;
+          
+          // Calculate cost impact per module (time savings value)
+          const estimatedHourSavingsValue = 50; // €50 per hour saved
+          moduleImpacts[module.key] = moduleHoursSaved * estimatedHourSavingsValue * s.annualVolume;
+        } else {
+          // Module is disabled, no savings or impact
+          moduleImpacts[module.key] = 0;
+        }
+      });
+      
+      // Calculate metrics
+      const workloadReductionPct = totalWorkloadHours > 0 ? (totalHoursSaved / totalWorkloadHours) * 100 : 0;
+      const hoursSavedPerHire = totalHoursSaved;
+      
+      // Time-to-fill calculations (use workload reduction % to determine TTF improvement)
+      const ttfImprovementPct = workloadReductionPct * 0.5; // 50% of workload reduction translates to TTF improvement
+      const daysSavedPerHire = (ttfImprovementPct / 100) * s.avgTTF;
+      const automatedTimeToClose = Math.max(1, s.avgTTF - daysSavedPerHire);
+      
+      // Cost per hire calculations (use workload reduction % to determine cost impact)
+      const manualCostPerHire = s.baseCostPerHire;
+      const costReductionPct = workloadReductionPct * 0.3; // 30% of workload reduction translates to cost reduction
+      const automatedCostPerHire = manualCostPerHire * (1 - costReductionPct / 100);
+      
+      // Annual savings calculation (based on time savings value)
+      const timeSavingsValuePerHire = totalHoursSaved * 50; // €50 per hour saved
+      const annualTimeSavings = s.annualVolume * timeSavingsValuePerHire;
+      
+      // Proper ROI calculation: ROI = ((Benefits - Investment) / Investment) * 100
+      const investmentCost = s.platformCostAnnual; // Annual platform cost
+      const netBenefit = annualTimeSavings; // Time savings benefit
+      const roiPct = investmentCost > 0 ? ((netBenefit - investmentCost) / investmentCost) * 100 : 0;
+      
+      // Additional metrics
+      const annualSavings = netBenefit;
+      const savingsPer100 = s.annualVolume > 0 ? (annualSavings / s.annualVolume) * 100 : 0;
+      const paybackMonths = investmentCost > 0 && netBenefit > 0 ? (investmentCost / (netBenefit / 12)) : 0;
+
+      return {
+        workloadReductionPct,
+        hoursSavedPerHire,
+        daysSavedPerHire,
+        automatedTimeToClose,
+        manualCostPerHire,
+        automatedCostPerHire,
+        annualSavings,
+        roiPct,
+        savingsPer100,
+        paybackMonths,
+        investmentCost,
+        moduleImpacts,
+        totalWorkloadHours,
+        totalHoursSaved
+      };
+    }
+
+    function render(){
+      const R = compute();
+      const cur = state.currency;
+
+      // Main ROI Display
+      el.roiPct.textContent = R.roiPct.toFixed(0);
+      el.annualSavings.textContent = fmtCurrency(R.annualSavings, cur);
+      el.investmentCost.textContent = fmtCurrency(R.investmentCost, cur);
+      el.paybackMonths.textContent = R.paybackMonths.toFixed(1);
+
+      // Key Metrics
+      el.workloadReductionPct.textContent = R.workloadReductionPct.toFixed(0);
+      el.hoursSavedPerHire.textContent = R.hoursSavedPerHire.toFixed(1);
+      el.daysSavedPerHire.textContent = R.daysSavedPerHire.toFixed(1);
+      el.ttfBase.textContent = state.avgTTF;
+      el.ttfNew.textContent = R.automatedTimeToClose.toFixed(1);
+      
+      // Update cost per hire displays
+      el.manualCostPerHire.textContent = fmtCurrency(R.manualCostPerHire, cur);
+      el.automatedCostPerHire.textContent = fmtCurrency(R.automatedCostPerHire, cur);
+
+      // Update details if visible
+      if (state.showDetails) {
+        renderDetails();
+      }
+    }
+
+    // Init
+    setInputsFromState();
+    attachInputHandlers();
+    render();
+  </script>
+</body>
+</html>
+</html>
