@@ -4,72 +4,631 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recruiting ROI Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
-      --bg:#f8fafc; /* slate-50 */
+      /* Color System */
+      --bg:#fafbfc;
       --card:#ffffff;
-      --text:#0f172a; /* slate-900 */
-      --muted:#64748b; /* slate-500 */
-      --border:#e2e8f0; /* slate-200 */
-      --accent:#0ea5e9; /* sky-500 */
-      --radius:16px;
-      --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 24px rgba(15,23,42,.06);
+      --text:#1a202c;
+      --text-light:#4a5568;
+      --text-muted:#718096;
+      --border:#e2e8f0;
+      --border-light:#f7fafc;
+      
+      /* Brand Colors */
+      --accent:#6366f1;
+      --accent-hover:#5855eb;
+      --accent-light:#e0e7ff;
+      --success:#10b981;
+      --warning:#f59e0b;
+      --error:#ef4444;
+      
+      /* Layout */
+      --radius:12px;
+      --radius-sm:8px;
+      --radius-lg:16px;
+      --shadow:0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md:0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg:0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      
+      /* Spacing */
+      --space-xs:4px;
+      --space-sm:8px;
+      --space-md:16px;
+      --space-lg:24px;
+      --space-xl:32px;
+      --space-2xl:48px;
     }
+    /* Reset and Base Styles */
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-    .container{max-width:1400px;margin:0 auto;padding:16px}
-    header{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:5}
-    header .container{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 16px;flex-wrap:wrap}
-    @media (max-width:768px){header .container{flex-direction:column;text-align:center;gap:12px}}
-    h1{font-size:20px;margin:0}
-    @media (max-width:600px){h1{font-size:18px}}
-    .sub{color:var(--muted);font-size:12px}
-    @media (max-width:600px){.sub{font-size:11px}}
-    .row{display:grid;grid-template-columns:1fr;gap:16px}
-    @media (min-width:768px){.row{grid-template-columns:1fr 1.5fr}}
-    @media (min-width:1200px){.row{grid-template-columns:1fr 2fr}}
-    section.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-    section.card h2{margin:0 0 8px 0;font-size:16px}
-    label{display:flex;flex-direction:column;gap:6px}
-    label span{color:#475569;font-size:12px}
-    input[type="number"],select{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:14px;min-width:0}
-    input[type="range"]{width:100%}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:8px;border-bottom:1px solid var(--border);text-align:left}
-    th{color:#475569;font-weight:600}
-    .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    @media (max-width:480px){.grid2{grid-template-columns:1fr}}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    @media (max-width:600px){.grid3{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:480px){.grid3{grid-template-columns:1fr}}
-    .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    @media (min-width:768px){.grid6{grid-template-columns:repeat(6,1fr)}}
-    @media (max-width:480px){.grid6{grid-template-columns:1fr}}
-    .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    @media (min-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
-    @media (max-width:480px){.kpis{grid-template-columns:1fr}}
-    .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-    .kpi .label{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
-    .kpi .value{font-size:22px;font-weight:700;margin:6px 0 2px}
-    .kpi .hint{color:#475569;font-size:12px}
-    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    @media (max-width:768px){.controls{justify-content:center;margin-top:8px}}
-    button{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
-    button:hover{background:#f1f5f9}
-    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:#334155}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+      letter-spacing:-0.01em;
+      scroll-behavior:smooth;
+    }
     
-    /* Toggle Switch Styles */
-    .toggle-switch{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-    .toggle-label{font-size:14px;color:var(--text);font-weight:500}
-    .toggle-switch input[type="checkbox"]{position:absolute;opacity:0;width:0;height:0}
-    .slider{position:relative;width:48px;height:24px;background:#cbd5e1;border-radius:24px;transition:background 0.3s ease;border:1px solid var(--border)}
-    .slider:before{content:"";position:absolute;height:18px;width:18px;left:2px;top:2px;background:white;border-radius:50%;transition:transform 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
-    .toggle-switch input:checked + .slider{background:var(--accent)}
-    .toggle-switch input:checked + .slider:before{transform:translateX(24px)}
-    .bar{height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden}
-    .bar > i{display:block;height:100%;background:var(--accent)}
-    .w{width:70px;padding:4px 6px;font-size:12px}
-    footer{color:#64748b;text-align:center;padding:24px 0}
+    /* Layout Components */
+    .container{
+      max-width:1400px;
+      margin:0 auto;
+      padding:var(--space-lg);
+    }
+    
+    header{
+      position:sticky;
+      top:0;
+      background:rgba(255,255,255,.95);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      z-index:100;
+      box-shadow:var(--shadow-md);
+    }
+    
+    header .container{
+      display:flex;
+      gap:var(--space-lg);
+      align-items:center;
+      justify-content:space-between;
+      padding:var(--space-md) var(--space-lg);
+      flex-wrap:wrap;
+    }
+    /* Typography */
+    h1{
+      font-size:clamp(24px, 4vw, 32px);
+      margin:0;
+      font-weight:700;
+      color:var(--text);
+      letter-spacing:-0.02em;
+    }
+    
+    .sub{
+      color:var(--text-muted);
+      font-size:14px;
+      font-weight:400;
+    }
+    
+    
+    /* Card Components */
+    section.card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:var(--space-lg);
+      box-shadow:var(--shadow);
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    section.card:hover{
+      box-shadow:var(--shadow-lg);
+      transform:translateY(-2px);
+    }
+    
+    section.card h2{
+      margin:0 0 var(--space-md) 0;
+      font-size:20px;
+      font-weight:600;
+      color:var(--text);
+      letter-spacing:-0.01em;
+    }
+    
+    section.card h3{
+      margin:0 0 var(--space-md) 0;
+      font-size:18px;
+      font-weight:600;
+      color:var(--text);
+      letter-spacing:-0.01em;
+    }
+    /* Form Components */
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:var(--space-xs);
+      margin-bottom:var(--space-sm);
+    }
+    
+    label span{
+      color:var(--text-light);
+      font-size:14px;
+      font-weight:500;
+      letter-spacing:-0.005em;
+    }
+    
+    input[type="number"],
+    select{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px var(--space-md);
+      font-size:15px;
+      min-width:0;
+      background:var(--card);
+      color:var(--text);
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    input[type="number"]:focus,
+    select:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px var(--accent-light);
+      transform:translateY(-1px);
+    }
+    
+    input[type="number"]:hover,
+    select:hover{
+      border-color:var(--accent);
+    }
+    
+    input[type="range"]{
+      width:100%;
+      margin:var(--space-sm) 0;
+    }
+    /* Table Components */
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+      background:var(--card);
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+    
+    th,td{
+      padding:var(--space-md) 12px;
+      border-bottom:1px solid var(--border-light);
+      text-align:left;
+    }
+    
+    th{
+      color:var(--text-light);
+      font-weight:600;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+      background:var(--border-light);
+    }
+    
+    tbody tr{
+      transition:background 0.2s ease;
+    }
+    
+    tbody tr:hover{
+      background:var(--border-light);
+    }
+    
+    /* Grid System */
+    .grid3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:var(--space-md);
+    }
+    
+    /* Controls */
+    .controls{
+      display:flex;
+      gap:var(--space-md);
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    
+    /* Button Components */
+    button{
+      border:1px solid var(--accent);
+      background:var(--accent);
+      color:white;
+      border-radius:var(--radius);
+      padding:12px var(--space-lg);
+      font-size:14px;
+      font-weight:600;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing:-0.005em;
+    }
+    
+    button:hover{
+      background:var(--accent-hover);
+      border-color:var(--accent-hover);
+      transform:translateY(-1px);
+      box-shadow:var(--shadow-lg);
+    }
+    
+    button:active{
+      transform:translateY(0);
+    }
+    
+    button:focus{
+      outline:none;
+      box-shadow:var(--shadow-lg), 0 0 0 3px var(--accent-light);
+    }
+    
+    button.secondary{
+      background:var(--card);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+    
+    button.secondary:hover{
+      background:var(--border-light);
+      border-color:var(--accent);
+    }
+    
+    /* Toggle Switch */
+    .toggle-switch{
+      display:flex;
+      align-items:center;
+      gap:var(--space-sm);
+      cursor:pointer;
+      user-select:none;
+    }
+    
+    .toggle-label{
+      font-size:14px;
+      color:var(--text);
+      font-weight:500;
+    }
+    
+    .toggle-switch input[type="checkbox"]{
+      position:absolute;
+      opacity:0;
+      width:0;
+      height:0;
+    }
+    
+    .slider{
+      position:relative;
+      width:48px;
+      height:24px;
+      background:var(--border);
+      border-radius:24px;
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border:1px solid var(--border);
+    }
+    
+    .slider:before{
+      content:"";
+      position:absolute;
+      height:18px;
+      width:18px;
+      left:2px;
+      top:2px;
+      background:white;
+      border-radius:50%;
+      transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:var(--shadow);
+    }
+    
+    .toggle-switch input:checked + .slider{
+      background:var(--accent);
+      border-color:var(--accent);
+    }
+    
+    .toggle-switch input:checked + .slider:before{
+      transform:translateX(24px);
+    }
+    
+    /* Form Groups */
+    .form-group{
+      margin-bottom:var(--space-sm);
+    }
+    
+    .admin-section{
+      margin-top:var(--space-md);
+      padding-top:var(--space-md);
+      border-top:1px solid var(--border-light);
+    }
+    
+    .admin-badge{
+      display:inline-block;
+      padding:2px 6px;
+      background:var(--warning);
+      color:white;
+      font-size:10px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+      border-radius:var(--radius-sm);
+      margin-left:var(--space-xs);
+    }
+    
+    .assumptions-text{
+      background:var(--border-light);
+      border-radius:var(--radius);
+      padding:var(--space-md);
+      margin-top:var(--space-md);
+    }
+    
+    .assumptions-text h4{
+      margin:0 0 var(--space-sm) 0;
+      font-size:14px;
+      font-weight:600;
+      color:var(--text-light);
+    }
+    
+    .assumptions-text ul{
+      margin:0;
+      padding-left:var(--space-md);
+    }
+    
+    .assumptions-text li{
+      font-size:12px;
+      color:var(--text-muted);
+      line-height:1.4;
+      margin-bottom:var(--space-xs);
+    }
+    
+    /* Loading States */
+    .loading{
+      opacity:0.6;
+      pointer-events:none;
+      position:relative;
+    }
+    
+    .loading::after{
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:20px;
+      height:20px;
+      margin:-10px 0 0 -10px;
+      border:2px solid var(--border);
+      border-top:2px solid var(--accent);
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    
+    @keyframes spin{
+      0%{transform:rotate(0deg)}
+      100%{transform:rotate(360deg)}
+    }
+    
+    
+    /* Tooltip System */
+    .module-tooltip {
+      position: relative !important;
+      overflow: visible !important;
+    }
+    
+    .module-tooltip::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.4;
+      white-space: normal;
+      max-width: 300px;
+      width: max-content;
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 10000;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .module-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.95);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 10000;
+    }
+    
+    .module-tooltip:hover::before,
+    .module-tooltip:hover::after {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateX(-50%) translateY(-4px) !important;
+    }
+    
+    /* Ensure the tooltip shows above other elements */
+    .module-tooltip:hover {
+      z-index: 1001 !important;
+    }
+    
+    /* Hide native tooltip when custom tooltip is shown */
+    .module-tooltip:hover[title]::before {
+      content: attr(data-tooltip) !important;
+    }
+    
+    /* Footer */
+    footer{
+      color:var(--text-muted);
+      text-align:center;
+      padding:var(--space-lg) 0;
+    }
+    
+    /* ===== RESPONSIVE DESIGN ===== */
+    
+    /* Mobile First - Base styles above are mobile */
+    
+    
+    /* Medium screens and up (tablets) */
+    @media (min-width: 768px) {
+      .container { padding: var(--space-xl); }
+      header .container { flex-direction: row; text-align: left; gap: var(--space-lg); }
+      .controls { justify-content: flex-end; margin-top: 0; }
+    }
+    
+    /* Large screens and up (desktop) */
+    @media (min-width: 1024px) {
+      .grid3 { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    /* Extra large screens */
+    @media (min-width: 1280px) {
+      .container { max-width: 1280px; }
+    }
+    
+    /* Mobile specific adjustments */
+    @media (max-width: 640px) {
+      .grid3 { grid-template-columns: 1fr; }
+      header .container { 
+        flex-direction: column; 
+        text-align: center; 
+        gap: var(--space-md); 
+      }
+      .controls { 
+        justify-content: center; 
+        margin-top: var(--space-sm); 
+      }
+      section.card { padding: var(--space-md); }
+      .container { padding: var(--space-md); }
+    }
+    
+    /* ROI Section Responsive Design */
+    @media (max-width: 768px) {
+      /* Stack ROI columns on mobile/tablet */
+      .card div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-lg) !important;
+      }
+      
+      /* Adjust ROI font size for smaller screens */
+      .card div[style*="clamp(48px, 8vw, 64px)"] {
+        font-size: clamp(36px, 10vw, 48px) !important;
+      }
+    }
+    
+    /* Full Width Layout Responsive Design */
+    @media (max-width: 1024px) {
+      /* Stack parameters and ROI vertically on tablet */
+      div[style*="grid-template-columns:1fr 1fr"]:not(.card *) {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-lg) !important;
+      }
+      
+      /* Stack module configuration layout on tablet */
+      div[style*="grid-template-columns:2fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-lg) !important;
+      }
+      
+      /* Reduce module grid to 2 columns on tablet */
+      .grid3 {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      
+      /* Keep 2-column parameters layout on tablet */
+      .card div[style*="grid-template-columns:1fr 1fr"]:not([style*="gap:20px"]) {
+        grid-template-columns: 1fr 1fr !important;
+      }
+      
+      /* Adjust chart height for smaller screens */
+      .card div[style*="height:280px"] {
+        height: 200px !important;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      /* Stack all 2-column grids vertically on mobile */
+      .card div[style*="grid-template-columns:1fr 1fr"],
+      div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-md) !important;
+      }
+      
+      /* Single column for modules on mobile */
+      .grid3 {
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* Further reduce chart height on mobile */
+      .card div[style*="height:280px"],
+      .card div[style*="height:200px"] {
+        height: 180px !important;
+      }
+      
+      /* Tooltip adjustments for mobile */
+      .module-tooltip::before {
+        max-width: 280px !important;
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: max-content !important;
+      }
+      
+      .module-tooltip:hover::before {
+        transform: translateX(-50%) translateY(-4px) !important;
+      }
+      
+      .module-tooltip::after {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+      }
+      
+      .module-tooltip:hover::after {
+        transform: translateX(-50%) translateY(-4px) !important;
+      }
+    }
+    
+    /* Print styles */
+    @media print {
+      header { position: static; box-shadow: none; }
+      .controls { display: none; }
+      section.card { break-inside: avoid; }
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --text-light: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --border-light: #475569;
+      }
+    }
+    
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+      :root {
+        --shadow: none;
+        --shadow-md: none;
+        --shadow-lg: none;
+        --border: #000000;
+      }
+      
+      section.card { border-width: 2px; }
+      button { border-width: 2px; }
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      
+      body { scroll-behavior: auto; }
+    }
+    
   </style>
 </head>
 <body>
@@ -84,152 +643,177 @@
           <input type="checkbox" id="adminModeToggle" checked />
           <span class="slider"></span>
         </label>
-        <select id="currency">
-          <option value="EUR">€ EUR</option>
-          <option value="USD">$ USD</option>
-          <option value="GBP">£ GBP</option>
-          <option value="PLN">zł PLN</option>
-        </select>
-        <button id="resetBtn">Reset to proposal</button>
       </div>
     </div>
   </header>
 
-  <main class="container" style="padding-top:16px">
-    <div class="row">
+  <main class="container" style="padding-top:var(--space-md)">
+    <!-- Full Width Layout -->
+    <div style="display:flex;flex-direction:column;gap:var(--space-lg);width:100%;">
+      
+      <!-- Top Section: Parameters and ROI side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-lg);width:100%;">
+        
       <!-- LEFT: Inputs -->
-      <div>
         <section class="card">
           <h2>Recruiting Parameters</h2>
-          <div class="grid2">
+          
+          <!-- Parameters in 2-column layout -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-bottom:var(--space-sm);">
+            <div class="form-group">
             <label>
               <span>Number of positions per year</span>
               <input id="annualVolume" type="number" min="0" placeholder="e.g. 100" />
             </label>
+            </div>
+            <div class="form-group">
             <label>
               <span>Average time-to-fill (in days)</span>
               <input id="avgTTF" type="number" min="1" />
             </label>
           </div>
-          <div style="margin-top:12px">
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-bottom:var(--space-sm);">
+            <div class="form-group">
             <label>
               <span>Cost per hire</span>
-              <input id="baseCostPerHire" type="number" min="0" placeholder="Can be a lump sum or calculated" />
+                <input id="baseCostPerHire" type="number" min="0" placeholder="Total cost to hire one person" />
             </label>
           </div>
-          <div style="margin-top:12px">
+            <div class="form-group">
             <label>
-              <span>Total time spent per position (hours)</span>
-              <input id="totalTimePerPosition" type="number" min="20" placeholder="Total recruiter time to close one position" />
-            </label>
+                <span>Total time spent per position (hours)</span>
+                <input id="totalTimePerPosition" type="number" min="20" placeholder="Total recruiter time to close one position" />
+              </label>
+            </div>
           </div>
-          <div id="adminPlatformCost" style="margin-top:50px;"> 
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-bottom:var(--space-sm);">
+            <!-- Currency Selection -->
+            <div class="form-group">
+              <label>
+                <span>Currency</span>
+                <select id="currency">
+                  <option value="EUR">€ EUR</option>
+                  <option value="USD">$ USD</option>
+                  <option value="GBP">£ GBP</option>
+                  <option value="PLN">zł PLN</option>
+                </select>
+              </label>
+            </div>
+             <div class="form-group">
+               <label>
+                 <span style="visibility:hidden;">Currency</span>
+                 <button id="resetBtnParams" class="btn secondary">Reset to proposal</button>
+               </label>
+             </div>
+          </div>
+          <div id="adminPlatformCost" class="admin-section">           
             <label>
-              <span style="color: orange; font-size: 20px;">(INTERNAL USE ONLY)</span>
-            </label>           
-            <label>
-              <span>Annual platform cost</span>
+              <span>Annual platform cost <span class="admin-badge">Internal Use Only</span></span>
               <input id="platformCostAnnual" type="number" min="0" placeholder="Yearly cost of automation platform" />
             </label>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.3;">
-              <em>Assumptions: <br/>
-              - Processing ~30 applications <br/>
-              - Conducting ~5 interviews on average per position.<br>
-              - Time-to-fill reduction is 20% from automation efficiency gains.<br>
-              - 60% of workload reduction translates to cost reduction.<br>
-              - Hourly rate calculated as: Base cost per hire ÷ Total time per position.</em>
-            </div>
-          </div>
-        </section>
-
-
-
-
-      </div>
-
-            <!-- RIGHT: ROI Results -->
-      <div>
-        <!-- Main ROI Display -->
-        <section class="card">
-          <div style="text-align:center;padding:20px">
-            <div class="label" style="color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:14px;margin-bottom:8px">Annual ROI</div>
-            <div style="font-size:12px;color:var(--muted);">
-              ROI = (Annual Benefits - Investment Cost) ÷ Investment Cost × 100
-            </div>
-            <div style="font-size:48px;font-weight:700;color:var(--accent);margin-bottom:8px" id="roiPct">0%</div>
-            <div style="font-size:18px;color:var(--text);margin-bottom:8px">
-              Annual Benefits: <span id="annualSavings">€0</span>
-          </div>
-            <div style="font-size:14px;color:var(--muted);margin-bottom:8px">
-              Investment Cost: <span id="investmentCost">€0</span>
-          </div>
-            <div style="font-size:14px;color:var(--muted)">
-              Payback: <span id="paybackMonths">0</span> months
+            <div class="assumptions-text">
+              <h4>Calculation Assumptions:</h4>
+              <ul>
+                <li>Processing ~30 applications per position</li>
+                <li>Conducting ~5 interviews on average per position</li>
+                <li>Time-to-fill reduction is 20% from automation efficiency gains</li>
+                <li>60% of workload reduction translates to cost reduction</li>
+                <li>Hourly rate calculated as: Base cost per hire ÷ Total time per position</li>
+              </ul>
           </div>
           </div>
           
+
         </section>
 
-        <!-- Key Metrics -->
-        <section class="kpis" style="margin-top:16px">
-          <div class="kpi">
-            <div class="label">Workload Reduction</div>
-            <div class="value"><span id="workloadReductionPct">0</span>%</div>
-            <div class="hint"><span id="hoursSavedPerHire">0</span> hrs saved/hire</div>
+        <!-- RIGHT: ROI Results -->
+        <section class="card" style="background:linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);color:white;border:none">
+          <div style="padding:12px">
+            <div style="color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:.05em;font-size:18px;margin-bottom:16px;font-weight:600;text-align:center">Annual ROI</div>
+            
+            <!-- Compact Layout -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+              
+              <!-- LEFT: ROI Information -->
+              <div style="text-align:center">
+                <div style="font-size:clamp(48px, 8vw, 64px);font-weight:800;margin-bottom:16px;text-shadow:0 2px 4px rgba(0,0,0,0.1);letter-spacing:-0.02em" id="roiPct">0%</div>
+                
+                <div style="display:grid;grid-template-columns:1fr;gap:10px;max-width:280px;margin:0 auto">
+                  <div style="background:rgba(255,255,255,0.1);padding:12px;border-radius:8px;backdrop-filter:blur(10px)">
+                    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:2px">Annual Benefits</div>
+                    <div style="font-size:24px;font-weight:700" id="annualSavings">€0</div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div style="background:rgba(255,255,255,0.1);padding:12px;border-radius:8px;backdrop-filter:blur(10px)">
+                      <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-bottom:2px">Investment</div>
+                      <div style="font-size:18px;font-weight:600" id="investmentCost">€0</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.1);padding:12px;border-radius:8px;backdrop-filter:blur(10px)">
+                      <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-bottom:2px">Payback</div>
+                      <div style="font-size:18px;font-weight:600"><span id="paybackMonths">0</span> mo</div>
+                    </div>
+                  </div>
+                </div>
+      </div>
+
+              <!-- RIGHT: Key Metrics -->
+      <div>
+                <div style="display:grid;grid-template-columns:1fr;gap:6px">
+                  <div style="background:rgba(255,255,255,0.1);padding:12px 14px;border-radius:6px;backdrop-filter:blur(10px)">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">Workload Reduction</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:2px"><span id="workloadReductionPct">0</span>%</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.7)"><span id="hoursSavedPerHire">0</span> hrs saved/hire</div>
           </div>
-          <div class="kpi">
-            <div class="label">Time-to-Fill Improvement</div>
-            <div class="value">-<span id="daysSavedPerHire">0</span> days</div>
-            <div class="hint">From <span id="ttfBase">0</span> to <span id="ttfNew">0</span> days</div>
+                  <div style="background:rgba(255,255,255,0.1);padding:12px 14px;border-radius:6px;backdrop-filter:blur(10px)">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">Time-to-Fill Improvement</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:2px">-<span id="daysSavedPerHire">0</span> days</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.7)">From <span id="ttfBase">0</span> to <span id="ttfNew">0</span> days</div>
           </div>
-          <div class="kpi">
-            <div class="label">Cost per Hire after Reduction</div>
-            <div class="value"><span id="automatedCostPerHire">€0</span></div>
-            <div class="hint">vs <span id="manualCostPerHire">€0</span> baseline</div>
+                  <div style="background:rgba(255,255,255,0.1);padding:12px 14px;border-radius:6px;backdrop-filter:blur(10px)">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.05em">Cost per Hire after Reduction</div>
+                    <div style="font-size:20px;font-weight:700;margin-bottom:2px"><span id="automatedCostPerHire">€0</span></div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.7)">vs <span id="manualCostPerHire">€0</span> baseline</div>
+          </div>
+          </div>
+              </div>
+              
+          </div>
           </div>
         </section>
 
-        <!-- Show Details Button -->
-        <section class="card" style="margin-top:16px;text-align:center">
-          <button id="toggleDetailsBtn" style="background:var(--accent);color:white;border:none;padding:12px 24px;font-size:16px;font-weight:600">
-            Show Details
-          </button>
-        </section>
+      </div>
 
-        <!-- Details Section (Hidden by default) -->
-        <div id="detailsSection" style="display:none">
-          <!-- Module Controls -->
-          <section class="card" style="margin-top:16px">
-            <h2>Module Configuration</h2>
-            <div class="grid2" style="gap:12px" id="moduleToggles"></div>
-          </section>
-
-                    <!-- Detailed Module Breakdown -->
-          <section class="card" style="margin-top:16px">
-            <h2>Detailed Module Analysis</h2>
-            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-              <table style="min-width:600px;font-size:12px">
-              <thead>
-                <tr>
-                  <th>Module</th>
-                    <th>Savings %</th>
-                    <th>Annual Value</th>
-                </tr>
-              </thead>
-                <tbody id="detailedModulesBody"></tbody>
-            </table>
+      <!-- Bottom Section: Module Configuration - Full Width -->
+      <section class="card" style="padding:16px;width:100%;">
+        
+        <!-- Full Width Layout: Modules + Chart side by side -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-xl);align-items:start;width:100%;">
+          
+          <!-- LEFT: Module Toggles - Wider space -->
+          <div style="overflow: visible;">
+            <div class="grid3" id="moduleToggles" style="overflow: visible;gap:8px;"></div>
+          </div>
+          
+          <!-- RIGHT: Module Impact Chart -->
+          <div>
+            <div style="position:relative;height:280px;">
+                <canvas id="moduleImpactChart"></canvas>
+              </div>
+          </div>
+          
           </div>
         </section>
 
+    </div>
+    
+    <!-- Details Section - Full Width -->
+    <div id="detailsSection" style="margin-top:var(--space-xl)">
           <!-- Sub-Module Details -->
-          <section id="adminSubModules" class="card" style="margin-top:16px;">
-            <label>
-              <span style="color: orange; font-size: 20px;">(INTERNAL USE ONLY)</span>
-            </label> 
+      <section id="adminSubModules" class="card">
             <div id="subModuleDetails"></div>
         </section>
-        </div>
-      </div>
     </div>
   </main>
 
@@ -241,21 +825,65 @@
       { code: 'GBP', symbol: '£' },
       { code: 'PLN', symbol: 'zł' },
     ];
+    
+    // Module colors for chart and buttons
+    // Get module color variations based on accent color
+    function getModuleColor(index, alpha = 1) {
+      // Different opacity levels of accent color for visual distinction
+      const alphaValues = [1, 0.8, 0.6, 0.9, 0.7, 0.5, 0.85, 0.65];
+      const opacity = alphaValues[index % alphaValues.length] * alpha;
+      return `rgba(99, 102, 241, ${opacity})`; // var(--accent) in rgba format
+    }
+    
+    // Currency formatter with caching
+    const currencyFormatters = new Map();
     function fmtCurrency(n, code){
       try{
-        return new Intl.NumberFormat(undefined,{style:'currency',currency:code,maximumFractionDigits:0}).format(n);
+        if (!currencyFormatters.has(code)) {
+          currencyFormatters.set(code, new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: code,
+            maximumFractionDigits: 0
+          }));
+        }
+        return currencyFormatters.get(code).format(n);
       }catch(e){
         return `${(n||0).toLocaleString()} ${code}`;
       }
     }
-    function clamp(n,min,max){return Math.max(min, Math.min(max, n));}
+    
+    // Debounce utility for performance
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+    
+    // Request animation frame throttle
+    function rafThrottle(func) {
+      let isRunning = false;
+      return function(...args) {
+        if (isRunning) return;
+        isRunning = true;
+        requestAnimationFrame(() => {
+          func.apply(this, args);
+          isRunning = false;
+        });
+      };
+    }
 
     // ===== State (defaults aligned to proposal) =====
 
     // ===== DOM refs =====
     const el = {
       currency: document.getElementById('currency'),
-      resetBtn: document.getElementById('resetBtn'),
+      resetBtnParams: document.getElementById('resetBtnParams'),
       adminModeToggle: document.getElementById('adminModeToggle'),
       annualVolume: document.getElementById('annualVolume'),
       avgTTF: document.getElementById('avgTTF'),
@@ -275,10 +903,8 @@
       manualCostPerHire: document.getElementById('manualCostPerHire'),
       automatedCostPerHire: document.getElementById('automatedCostPerHire'),
       // Details
-      toggleDetailsBtn: document.getElementById('toggleDetailsBtn'),
       detailsSection: document.getElementById('detailsSection'),
       moduleToggles: document.getElementById('moduleToggles'),
-      detailedModulesBody: document.getElementById('detailedModulesBody'),
       subModuleDetails: document.getElementById('subModuleDetails'),
       // Admin sections
       adminPlatformCost: document.getElementById('adminPlatformCost'),
@@ -295,20 +921,59 @@
       el.adminModeToggle.checked = state.adminMode;
     }
 
+    // Create debounced render function for input changes
+    const debouncedRender = debounce(render, 150);
+    const throttledRender = rafThrottle(render);
+
     function attachInputHandlers(){
-      el.currency.addEventListener('change', () => {state.currency = el.currency.value; render();});
-      el.annualVolume.addEventListener('input', () => {state.annualVolume = +el.annualVolume.value||0; render();});
-      el.avgTTF.addEventListener('input', () => {state.avgTTF = +el.avgTTF.value||0; render();});
-      el.baseCostPerHire.addEventListener('input', () => {state.baseCostPerHire = +el.baseCostPerHire.value||0; render();});
-      el.platformCostAnnual.addEventListener('input', () => {state.platformCostAnnual = +el.platformCostAnnual.value||0; render();});
-      el.totalTimePerPosition.addEventListener('input', () => {state.totalTimePerPosition = +el.totalTimePerPosition.value||0; render();});
-      el.adminModeToggle.addEventListener('change', () => {state.adminMode = el.adminModeToggle.checked; toggleAdminSections();});
-      el.resetBtn.addEventListener('click', () => { Object.assign(state, defaultState()); setInputsFromState(); toggleAdminSections(); render(); });
-      el.toggleDetailsBtn.addEventListener('click', () => {
-        state.showDetails = !state.showDetails;
-        el.detailsSection.style.display = state.showDetails ? 'block' : 'none';
-        el.toggleDetailsBtn.textContent = state.showDetails ? 'Hide Details' : 'Show Details';
-        if (state.showDetails) renderDetails();
+      // Immediate render for currency changes
+      el.currency.addEventListener('change', () => {
+        state.currency = el.currency.value; 
+        render();
+      });
+      
+      // Debounced render for numeric inputs
+      el.annualVolume.addEventListener('input', () => {
+        state.annualVolume = +el.annualVolume.value || 0; 
+        debouncedRender();
+      });
+      
+      el.avgTTF.addEventListener('input', () => {
+        state.avgTTF = +el.avgTTF.value || 0; 
+        debouncedRender();
+      });
+      
+      el.baseCostPerHire.addEventListener('input', () => {
+        state.baseCostPerHire = +el.baseCostPerHire.value || 0; 
+        debouncedRender();
+      });
+      
+      el.platformCostAnnual.addEventListener('input', () => {
+        state.platformCostAnnual = +el.platformCostAnnual.value || 0; 
+        debouncedRender();
+      });
+      
+      el.totalTimePerPosition.addEventListener('input', () => {
+        state.totalTimePerPosition = +el.totalTimePerPosition.value || 0; 
+        debouncedRender();
+      });
+      
+      // Immediate update for admin toggle
+      el.adminModeToggle.addEventListener('change', () => {
+        state.adminMode = el.adminModeToggle.checked; 
+        toggleAdminSections();
+      });
+      
+      // Reset button in parameters section
+      el.resetBtnParams.addEventListener('click', () => {
+        el.resetBtnParams.classList.add('loading');
+        setTimeout(() => {
+          Object.assign(state, defaultState()); 
+          setInputsFromState(); 
+          toggleAdminSections(); 
+          render();
+          el.resetBtnParams.classList.remove('loading');
+        }, 100);
       });
     }
 
@@ -326,7 +991,7 @@
         baseCostPerHire: 4000,
         platformCostAnnual: 50000,
         totalTimePerPosition: 50,
-        adminMode: true,
+        adminMode: false,
         modules: [
           {
             key: 'jobpost', name: 'Job Post Automation', description: 'Increase qualified applicant flow by automating job description creation and distribution across channels.', enabled: true,
@@ -336,7 +1001,7 @@
             ]
           },
           {
-            key: 'cvmatching', name: 'CV Matching Pre-Screen Automation', description: 'Parse, enrich, and rank candidates against roles; search external sources; summarize and de-duplicate profiles.', enabled: true,
+            key: 'cvmatching', name: 'CV Matching Automation', description: 'Parse, enrich, and rank candidates against roles; search external sources; summarize and de-duplicate profiles.', enabled: true,
             subModules: [
               { name: 'AI-powered CV parsing and keyword extraction', description: 'Convert resumes into structured profiles with skills, titles, dates, and extracted entities for better searchability.', effortHours: 2.0, savingsPct: 85 },
               { name: 'Automatic candidate-job matching with scoring', description: 'Score candidate fit to job description requirements and nice-to-haves to produce ranked lists automatically.', effortHours: 2.5, savingsPct: 75 },
@@ -415,8 +1080,7 @@
               { name: 'Gamified new-hire checklist', description: 'Motivate completion through points, badges, and progress tracking for engagement and retention.', effortHours: 0.1, savingsPct: 65 }
             ]
           }
-        ],
-        showDetails: false
+        ]
       };
     }
 
@@ -425,75 +1089,85 @@
 
     function renderDetails(){
       renderModuleToggles();
-      renderDetailedModules();
       renderSubModuleDetails();
     }
 
     function renderModuleToggles(){
       el.moduleToggles.innerHTML = '';
+      const R = compute();
+      
       state.modules.forEach((module, idx) => {
+        const moduleSavingsPct = R.moduleSavingsPercents[module.key] || 0;
+        const moduleAnnualValue = R.moduleImpacts[module.key] || 0;
+        const moduleColor = getModuleColor(idx);
+        
         const button = document.createElement('button');
+        button.className = 'module-tooltip';
+        button.setAttribute('data-tooltip', module.description);
+        button.setAttribute('title', module.description); // Fallback native tooltip
+
         button.innerHTML = `
-          <div style="margin-bottom: 6px; font-weight: ${module.enabled ? '600' : '500'}; font-size: 14px;">${module.name}</div>
-          <div style="font-size: 12px; opacity: 0.85; line-height: 1.3;">${module.description}</div>
+          <div style="margin: 12px; font-weight: ${module.enabled ? '500' : '400'}; font-size: 15px;">
+            ${module.name}
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-top: 6px; border-top: 1px solid ${module.enabled ? 'rgba(0,0,0,0.1)' : 'var(--border-light)'};">
+            <div style="text-align: center;">
+              <div style="font-size: 9px; opacity: ${module.enabled ? '0.8' : '0.6'}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px;">Savings</div>
+              <div style="font-size: 12px; font-weight: 500;">${moduleSavingsPct.toFixed(1)}%</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 9px; opacity: ${module.enabled ? '0.8' : '0.6'}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px;">Value</div>
+              <div style="font-size: 12px; font-weight: 500;">${fmtCurrency(moduleAnnualValue, state.currency)}</div>
+            </div>
+          </div>
         `;
         button.style.cssText = `
-          padding: 14px 16px;
-          border: 2px solid ${module.enabled ? 'var(--accent)' : 'var(--border)'};
-          border-radius: 8px;
-          background: ${module.enabled ? 'var(--accent)' : 'transparent'};
-          color: ${module.enabled ? 'white' : 'var(--text)'};
-          font-size: 13px;
+          padding: 10px 12px;
+          border: ${module.enabled ? '2px solid var(--accent)' : '2px solid var(--border)'};
+          border-radius: var(--radius);
+          background: var(--card);
+          color: var(--text);
+          font-size: 12px;
           font-weight: ${module.enabled ? '600' : '400'};
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           width: 100%;
           text-align: left;
-          min-height: 80px;
+          min-height: 70px;
+          box-shadow: ${module.enabled ? '0 0 0 1px var(--accent-light)' : 'var(--shadow)'};
+          position: relative;
+          overflow: visible;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         `;
         
         // Hover effect
         button.addEventListener('mouseenter', () => {
           if (!module.enabled) {
             button.style.borderColor = 'var(--accent)';
-            button.style.background = '#f0f9ff';
+            button.style.borderWidth = '3px';
+            button.style.transform = 'translateY(-2px)';
+            button.style.boxShadow = '0 0 0 1px var(--accent-light)';
           }
         });
         
         button.addEventListener('mouseleave', () => {
           if (!module.enabled) {
             button.style.borderColor = 'var(--border)';
-            button.style.background = 'transparent';
+            button.style.borderWidth = '2px';
+            button.style.transform = 'translateY(0)';
+            button.style.boxShadow = 'var(--shadow)';
           }
         });
         
         button.addEventListener('click', () => {
           state.modules[idx].enabled = !state.modules[idx].enabled;
           render();
-          if (state.showDetails) renderDetails();
+          renderDetails();
         });
         
         el.moduleToggles.appendChild(button);
-      });
-    }
-
-    function renderDetailedModules(){
-      el.detailedModulesBody.innerHTML = '';
-      const R = compute();
-      
-      state.modules.forEach(module => {
-        if (!module.enabled) return;
-        
-        // Use the module savings percentage calculated in compute function
-        const moduleSavingsPct = R.moduleSavingsPercents[module.key] || 0;
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${module.name}</td>
-          <td>${moduleSavingsPct.toFixed(1)}%</td>
-          <td style="color:var(--accent)">${fmtCurrency(R.moduleImpacts[module.key] || 0, state.currency)}</td>
-        `;
-        el.detailedModulesBody.appendChild(tr);
       });
     }
 
@@ -509,27 +1183,27 @@
         let subModuleRows = '';
         module.subModules.forEach(sub => {
           const timeSaved = sub.effortHours * sub.savingsPct / 100;
-          const description = sub.description ? `<br><small style="color:var(--muted);font-style:italic;line-height:1.2">${sub.description}</small>` : '';
+          const description = sub.description ? `<div style="color:var(--text-muted);font-style:italic;line-height:1.4;font-size:13px;margin-top:1px;">${sub.description}</div>` : '';
           subModuleRows += `
             <tr>
-              <td style="padding-left:20px">${sub.name}${description}</td>
-              <td>${sub.effortHours.toFixed(1)} hrs</td>
-              <td>${sub.savingsPct}%</td>
-              <td>${timeSaved.toFixed(1)} hrs</td>
+              <td style="padding:8px;"><div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:2px;">${sub.name}</div>${description}</td>
+              <td style="font-size:14px;text-align:center;padding:12px 8px;">${sub.effortHours.toFixed(1)} hrs</td>
+              <td style="font-size:14px;text-align:center;padding:12px 8px;">${sub.savingsPct}%</td>
+              <td style="font-size:14px;text-align:center;padding:12px 8px;">${timeSaved.toFixed(1)} hrs</td>
             </tr>
           `;
         });
         
         moduleDiv.innerHTML = `
-          <h4 style="margin:0 0 4px 0;color:var(--accent)">${module.name}</h4>
-          <p style="margin:0 0 12px 0;color:var(--muted);font-size:12px;line-height:1.3;">${module.description}</p>
-          <table style="width:100%;font-size:11px">
+          <h4 style="margin:0 0 6px 0;color:var(--accent);font-size:18px;">${module.name}</h4>
+          <p style="margin:0 0 16px 0;color:var(--text-light);font-size:14px;line-height:1.4;">${module.description}</p>
+          <table style="width:100%;font-size:14px;">
             <thead>
               <tr style="background:var(--bg)">
-                <th style="text-align:left">Sub-Module</th>
-                <th style="text-align:center;width:80px">Effort</th>
-                <th style="text-align:center;width:80px">Savings %</th>
-                <th style="text-align:center;width:100px">Hours Saved</th>
+                <th style="text-align:left;font-size:13px;padding:12px 8px 8px 20px;">Sub-Module</th>
+                <th style="text-align:center;width:80px;font-size:13px;padding:12px 8px 8px 8px;">Effort</th>
+                <th style="text-align:center;width:80px;font-size:13px;padding:12px 8px 8px 8px;">Savings %</th>
+                <th style="text-align:center;width:100px;font-size:13px;padding:12px 8px 8px 8px;">Hours Saved</th>
               </tr>
             </thead>
             <tbody>
@@ -589,7 +1263,6 @@
       const automatedCostPerHire = manualCostPerHire * (1 - costReductionPct / 100);
       
       // Annual savings calculation (based on time savings value)
-      const timeSavingsValuePerHire = totalHoursSaved * hourlyRate;
       const annualTimeSavings = s.annualVolume * manualCostPerHire * costReductionPct / 100;
       
       // Proper ROI calculation: ROI = ((Benefits - Investment) / Investment) * 100
@@ -599,7 +1272,6 @@
       
       // Additional metrics
       const annualSavings = netBenefit;
-      const savingsPer100 = s.annualVolume > 0 ? (annualSavings / s.annualVolume) * 100 : 0;
       const paybackMonths = investmentCost > 0 && netBenefit > 0 ? (investmentCost / (netBenefit / 12)) : 0;
 
       return {
@@ -611,7 +1283,6 @@
         automatedCostPerHire,
         annualSavings,
         roiPct,
-        savingsPer100,
         paybackMonths,
         investmentCost,
         moduleImpacts,
@@ -641,9 +1312,110 @@
       el.manualCostPerHire.textContent = fmtCurrency(R.manualCostPerHire, cur);
       el.automatedCostPerHire.textContent = fmtCurrency(R.automatedCostPerHire, cur);
 
-      // Update details if visible
-      if (state.showDetails) {
+      // Always update details
         renderDetails();
+      
+      // Render charts
+      renderCharts();
+    }
+
+    // ===== Chart Variables =====
+    let charts = {
+      moduleImpact: null
+    };
+
+    // ===== Chart Functions =====
+    function destroyCharts() {
+      if (charts.moduleImpact) {
+        charts.moduleImpact.destroy();
+        charts.moduleImpact = null;
+      }
+    }
+
+    function createModuleImpactChart() {
+      try {
+        const canvas = document.getElementById('moduleImpactChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (charts.moduleImpact) {
+          charts.moduleImpact.destroy();
+          charts.moduleImpact = null;
+        }
+        
+        const R = compute();
+        const enabledModules = state.modules.filter(m => m.enabled);
+        
+        // Don't create chart if no modules are enabled
+        if (enabledModules.length === 0) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+          ctx.textAlign = 'center';
+          ctx.fillText('No modules selected', canvas.width / 2, canvas.height / 2);
+          return;
+        }
+        
+        charts.moduleImpact = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: enabledModules.map(m => m.name),
+            datasets: [{
+              data: enabledModules.map(m => R.moduleImpacts[m.key] || 0),
+              backgroundColor: enabledModules.map((m, idx) => getModuleColor(state.modules.indexOf(m))),
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverBorderWidth: 3,
+              hoverBorderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              duration: 300,
+              easing: 'easeOutQuart'
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                cornerRadius: 8,
+                callbacks: {
+                  label: function(context) {
+                    const percentage = ((context.parsed / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                    return `${context.label}: ${fmtCurrency(context.parsed, state.currency)} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '60%',
+            elements: {
+              arc: {
+                borderWidth: 2
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to create module impact chart:', error);
+      }
+    }
+
+    function renderCharts() {
+      // Only render charts if Chart.js is available and we're not already rendering
+      if (typeof Chart !== 'undefined' && !renderCharts.isRendering) {
+        renderCharts.isRendering = true;
+        requestAnimationFrame(() => {
+          createModuleImpactChart();
+          renderCharts.isRendering = false;
+        });
       }
     }
 
@@ -654,5 +1426,4 @@
     render();
   </script>
 </body>
-</html>
 </html>
