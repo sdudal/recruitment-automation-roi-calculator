@@ -52,20 +52,11 @@
     .kpi .label{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
     .kpi .value{font-size:22px;font-weight:700;margin:6px 0 2px}
     .kpi .hint{color:#475569;font-size:12px}
-    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     @media (max-width:768px){.controls{justify-content:center;margin-top:8px}}
     button{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
     button:hover{background:#f1f5f9}
     .pill{display:inline-block;padding:2px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:#334155}
-    
-    /* Toggle Switch Styles */
-    .toggle-switch{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-    .toggle-label{font-size:14px;color:var(--text);font-weight:500}
-    .toggle-switch input[type="checkbox"]{position:absolute;opacity:0;width:0;height:0}
-    .slider{position:relative;width:48px;height:24px;background:#cbd5e1;border-radius:24px;transition:background 0.3s ease;border:1px solid var(--border)}
-    .slider:before{content:"";position:absolute;height:18px;width:18px;left:2px;top:2px;background:white;border-radius:50%;transition:transform 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
-    .toggle-switch input:checked + .slider{background:var(--accent)}
-    .toggle-switch input:checked + .slider:before{transform:translateX(24px)}
     .bar{height:8px;background:#e2e8f0;border-radius:999px;overflow:hidden}
     .bar > i{display:block;height:100%;background:var(--accent)}
     .w{width:70px;padding:4px 6px;font-size:12px}
@@ -77,13 +68,9 @@
     <div class="container">
       <div>
         <h1>Recruiting ROI Calculator</h1>
+        <div class="sub">Calculate true ROI: (Benefits - Platform Cost) / Platform Cost × 100 (24.9 hrs baseline per hire)</div>
       </div>
       <div class="controls">
-        <label class="toggle-switch">
-          <span class="toggle-label">Show internal information</span>
-          <input type="checkbox" id="adminModeToggle" checked />
-          <span class="slider"></span>
-        </label>
         <select id="currency">
           <option value="EUR">€ EUR</option>
           <option value="USD">$ USD</option>
@@ -119,26 +106,9 @@
           </div>
           <div style="margin-top:12px">
             <label>
-              <span>Total time spent per position (hours)</span>
-              <input id="totalTimePerPosition" type="number" min="20" placeholder="Total recruiter time to close one position" />
-            </label>
-          </div>
-          <div id="adminPlatformCost" style="margin-top:50px;"> 
-            <label>
-              <span style="color: orange; font-size: 20px;">(INTERNAL USE ONLY)</span>
-            </label>           
-            <label>
               <span>Annual platform cost</span>
               <input id="platformCostAnnual" type="number" min="0" placeholder="Yearly cost of automation platform" />
             </label>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.3;">
-              <em>Assumptions: <br/>
-              - Processing ~30 applications <br/>
-              - Conducting ~5 interviews on average per position.<br>
-              - Time-to-fill reduction is 20% from automation efficiency gains.<br>
-              - 60% of workload reduction translates to cost reduction.<br>
-              - Hourly rate calculated as: Base cost per hire ÷ Total time per position.</em>
-            </div>
           </div>
         </section>
 
@@ -153,9 +123,6 @@
         <section class="card">
           <div style="text-align:center;padding:20px">
             <div class="label" style="color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:14px;margin-bottom:8px">Annual ROI</div>
-            <div style="font-size:12px;color:var(--muted);">
-              ROI = (Annual Benefits - Investment Cost) ÷ Investment Cost × 100
-            </div>
             <div style="font-size:48px;font-weight:700;color:var(--accent);margin-bottom:8px" id="roiPct">0%</div>
             <div style="font-size:18px;color:var(--text);margin-bottom:8px">
               Annual Benefits: <span id="annualSavings">€0</span>
@@ -167,7 +134,6 @@
               Payback: <span id="paybackMonths">0</span> months
           </div>
           </div>
-          
         </section>
 
         <!-- Key Metrics -->
@@ -183,7 +149,7 @@
             <div class="hint">From <span id="ttfBase">0</span> to <span id="ttfNew">0</span> days</div>
           </div>
           <div class="kpi">
-            <div class="label">Cost per Hire after Reduction</div>
+            <div class="label">Cost per Hire Reduction</div>
             <div class="value"><span id="automatedCostPerHire">€0</span></div>
             <div class="hint">vs <span id="manualCostPerHire">€0</span> baseline</div>
           </div>
@@ -212,6 +178,7 @@
               <thead>
                 <tr>
                   <th>Module</th>
+                    <th>Workload %</th>
                     <th>Savings %</th>
                     <th>Annual Value</th>
                 </tr>
@@ -222,13 +189,13 @@
         </section>
 
           <!-- Sub-Module Details -->
-          <section id="adminSubModules" class="card" style="margin-top:16px;">
-            <label>
-              <span style="color: orange; font-size: 20px;">(INTERNAL USE ONLY)</span>
-            </label> 
+          <section class="card" style="margin-top:16px">
+            <h2>Sub-Module Breakdown</h2>
             <div id="subModuleDetails"></div>
         </section>
         </div>
+
+        <footer style="margin-top:20px">Select automation modules to see savings vs. full baseline workload. Adjust parameters to match your recruiting process.</footer>
       </div>
     </div>
   </main>
@@ -251,17 +218,118 @@
     function clamp(n,min,max){return Math.max(min, Math.min(max, n));}
 
     // ===== State (defaults aligned to proposal) =====
+    const state = {
+      currency: 'EUR',
+      annualVolume: 120,
+      avgTTF: 36,
+      baseCostPerHire: 4000,
+      platformCostAnnual: 50000, // Annual platform cost for automation
+      modules: [
+        {
+          key: 'prescreen', name: 'Pre-Screening Assistant', enabled: true, totalHours: 4.5,
+          subModules: [
+            { name: 'Knock-out questions & eligibility checks', effortHours: 1.5, savingsPct: 70 },
+            { name: 'CV keyword/skill checks', effortHours: 1.5, savingsPct: 60 },
+            { name: 'Auto Q&A for candidates', effortHours: 0.8, savingsPct: 50 },
+            { name: 'Routing to correct recruiter/role', effortHours: 0.4, savingsPct: 70 },
+            { name: 'Pre-screen summaries', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'resume', name: 'Resume Structuring', enabled: true, totalHours: 3,
+          subModules: [
+            { name: 'Parsing CVs into structured fields', effortHours: 1.2, savingsPct: 80 },
+            { name: 'Normalizing titles/skills', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Deduplication & profile merging', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Data quality checks', effortHours: 0.5, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'matching', name: 'Candidate Matching', enabled: true, totalHours: 3,
+          subModules: [
+            { name: 'Ranking against JD requirements', effortHours: 1.2, savingsPct: 70 },
+            { name: 'Surfacing similar candidates/pools', effortHours: 0.8, savingsPct: 60 },
+            { name: 'Gap analysis vs. must-haves', effortHours: 0.6, savingsPct: 50 },
+            { name: 'Auto-refreshing shortlists', effortHours: 0.4, savingsPct: 80 }
+          ]
+        },
+        {
+          key: 'interview', name: 'Interview Intelligence', enabled: true, totalHours: 2.2,
+          subModules: [
+            { name: 'Interview guides & scorecards', effortHours: 0.8, savingsPct: 60 },
+            { name: 'Suggested questions by JD', effortHours: 0.5, savingsPct: 50 },
+            { name: 'Feedback normalization', effortHours: 0.6, savingsPct: 60 },
+            { name: 'Red-flag detection', effortHours: 0.3, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'scheduling', name: 'Scheduling & Orchestration', enabled: true, totalHours: 4,
+          subModules: [
+            { name: 'Multi-participant coordination', effortHours: 1.5, savingsPct: 80 },
+            { name: 'Time-zone handling & rescheduling', effortHours: 1, savingsPct: 80 },
+            { name: 'Automated reminders & prep emails', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Room/VC setup & conflicts', effortHours: 0.4, savingsPct: 70 },
+            { name: 'Post-interview follow-ups', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'jobpost', name: 'Job Post Processing', enabled: true, totalHours: 2.2,
+          subModules: [
+            { name: 'JD drafting from intake notes', effortHours: 1, savingsPct: 70 },
+            { name: 'Tone/brand & readability checks', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Channel-ready variants', effortHours: 0.5, savingsPct: 70 },
+            { name: 'SEO/keyword optimization', effortHours: 0.2, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'reporting', name: 'Reporting & Predictive Insights', enabled: true, totalHours: 1.5,
+          subModules: [
+            { name: 'KPI dashboards', effortHours: 0.5, savingsPct: 60 },
+            { name: 'Productivity analytics', effortHours: 0.3, savingsPct: 60 },
+            { name: 'Funnel drop-off analysis', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Cost per hire/source calcs', effortHours: 0.2, savingsPct: 60 },
+            { name: 'SLA alerts & trendlines', effortHours: 0.2, savingsPct: 50 }
+          ]
+        },
+        {
+          key: 'compliance', name: 'Compliance & Risk Review', enabled: true, totalHours: 1.5,
+          subModules: [
+            { name: 'Bias language detection', effortHours: 0.6, savingsPct: 70 },
+            { name: 'GDPR/EEOC checks', effortHours: 0.3, savingsPct: 60 },
+            { name: 'Audit trails', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Offer/comms compliance', effortHours: 0.3, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'forecast', name: 'Forecasting & Volume Simulation', enabled: true, totalHours: 1,
+          subModules: [
+            { name: 'Demand simulations', effortHours: 0.3, savingsPct: 50 },
+            { name: 'Capacity planning', effortHours: 0.2, savingsPct: 60 },
+            { name: 'TTF projections', effortHours: 0.2, savingsPct: 50 },
+            { name: 'Scenario testing', effortHours: 0.2, savingsPct: 50 },
+            { name: 'What-if adoption modeling', effortHours: 0.1, savingsPct: 60 }
+          ]
+        },
+        {
+          key: 'onboarding', name: 'Onboarding Coordination', enabled: true, totalHours: 2,
+          subModules: [
+            { name: 'Document collection', effortHours: 0.8, savingsPct: 70 },
+            { name: 'Checklists & welcome packs', effortHours: 0.6, savingsPct: 60 },
+            { name: 'Start-date confirmations', effortHours: 0.6, savingsPct: 60 }
+          ]
+        }
+      ],
+      showDetails: false
+    };
 
     // ===== DOM refs =====
     const el = {
       currency: document.getElementById('currency'),
       resetBtn: document.getElementById('resetBtn'),
-      adminModeToggle: document.getElementById('adminModeToggle'),
       annualVolume: document.getElementById('annualVolume'),
       avgTTF: document.getElementById('avgTTF'),
       baseCostPerHire: document.getElementById('baseCostPerHire'),
       platformCostAnnual: document.getElementById('platformCostAnnual'),
-      totalTimePerPosition: document.getElementById('totalTimePerPosition'),
       // ROI Display
       roiPct: document.getElementById('roiPct'),
       annualSavings: document.getElementById('annualSavings'),
@@ -280,9 +348,6 @@
       moduleToggles: document.getElementById('moduleToggles'),
       detailedModulesBody: document.getElementById('detailedModulesBody'),
       subModuleDetails: document.getElementById('subModuleDetails'),
-      // Admin sections
-      adminPlatformCost: document.getElementById('adminPlatformCost'),
-      adminSubModules: document.getElementById('adminSubModules'),
     };
 
     function setInputsFromState(){
@@ -291,8 +356,6 @@
       el.avgTTF.value = state.avgTTF;
       el.baseCostPerHire.value = state.baseCostPerHire;
       el.platformCostAnnual.value = state.platformCostAnnual;
-      el.totalTimePerPosition.value = state.totalTimePerPosition;
-      el.adminModeToggle.checked = state.adminMode;
     }
 
     function attachInputHandlers(){
@@ -301,21 +364,13 @@
       el.avgTTF.addEventListener('input', () => {state.avgTTF = +el.avgTTF.value||0; render();});
       el.baseCostPerHire.addEventListener('input', () => {state.baseCostPerHire = +el.baseCostPerHire.value||0; render();});
       el.platformCostAnnual.addEventListener('input', () => {state.platformCostAnnual = +el.platformCostAnnual.value||0; render();});
-      el.totalTimePerPosition.addEventListener('input', () => {state.totalTimePerPosition = +el.totalTimePerPosition.value||0; render();});
-      el.adminModeToggle.addEventListener('change', () => {state.adminMode = el.adminModeToggle.checked; toggleAdminSections();});
-      el.resetBtn.addEventListener('click', () => { Object.assign(state, defaultState()); setInputsFromState(); toggleAdminSections(); render(); });
+      el.resetBtn.addEventListener('click', () => { Object.assign(state, defaultState()); setInputsFromState(); render(); });
       el.toggleDetailsBtn.addEventListener('click', () => {
         state.showDetails = !state.showDetails;
         el.detailsSection.style.display = state.showDetails ? 'block' : 'none';
         el.toggleDetailsBtn.textContent = state.showDetails ? 'Hide Details' : 'Show Details';
         if (state.showDetails) renderDetails();
       });
-    }
-
-    function toggleAdminSections(){
-      const display = state.adminMode ? 'block' : 'none';
-      el.adminPlatformCost.style.display = display;
-      el.adminSubModules.style.display = display;
     }
 
     function defaultState(){
@@ -325,103 +380,104 @@
         avgTTF: 36,
         baseCostPerHire: 4000,
         platformCostAnnual: 50000,
-        totalTimePerPosition: 50,
-        adminMode: true,
         modules: [
           {
-            key: 'jobpost', name: 'Job Post Automation', description: 'Increase qualified applicant flow by automating job description creation and distribution across channels.', enabled: true,
+            key: 'prescreen', name: 'Pre-Screening Assistant', enabled: true, totalHours: 4.5,
             subModules: [
-              { name: 'Automatic JD drafting from intake notes using AI', description: 'Generate clear, bias-checked job descriptions from hiring manager notes and templates using AI assistance.', effortHours: 1.0, savingsPct: 70 },
-              { name: 'One-click multi-channel job posting (job boards, LinkedIn, Indeed, Djinni, etc.)', description: 'Publish and manage job postings across multiple channels with tracking metadata and automatic expirations.', effortHours: 0.8, savingsPct: 75 }
+              { name: 'Knock-out questions & eligibility checks', effortHours: 1.5, savingsPct: 70 },
+              { name: 'CV keyword/skill checks', effortHours: 1.5, savingsPct: 60 },
+              { name: 'Auto Q&A for candidates', effortHours: 0.8, savingsPct: 50 },
+              { name: 'Routing to correct recruiter/role', effortHours: 0.4, savingsPct: 70 },
+              { name: 'Pre-screen summaries', effortHours: 0.3, savingsPct: 60 }
             ]
           },
           {
-            key: 'cvmatching', name: 'CV Matching Pre-Screen Automation', description: 'Parse, enrich, and rank candidates against roles; search external sources; summarize and de-duplicate profiles.', enabled: true,
+            key: 'resume', name: 'Resume Structuring', enabled: true, totalHours: 3,
             subModules: [
-              { name: 'AI-powered CV parsing and keyword extraction', description: 'Convert resumes into structured profiles with skills, titles, dates, and extracted entities for better searchability.', effortHours: 2.0, savingsPct: 85 },
-              { name: 'Automatic candidate-job matching with scoring', description: 'Score candidate fit to job description requirements and nice-to-haves to produce ranked lists automatically.', effortHours: 2.5, savingsPct: 75 },
-              { name: 'Auto-search across external databases (LinkedIn, GitHub, Djinni API)', description: 'Continuously discover similar candidates and enrich profiles from external sources and platforms.', effortHours: 1.5, savingsPct: 80 },
-              { name: 'Candidate ranking and prioritization', description: 'Prioritize candidates using weighted criteria and recency signals to surface the best matches first.', effortHours: 1.2, savingsPct: 75 },
-              { name: 'AI summarization (1-page candidate overview)', description: 'Create concise briefs with key skills, years of experience, and potential risk flags for quick review.', effortHours: 1.2, savingsPct: 75 },
-              { name: 'Duplicate detection: Auto-flagging if the same candidate exists under different emails/names', description: 'Detect and merge duplicate profiles even when names, emails, or contact details differ across applications.', effortHours: 0.6, savingsPct: 85 }
+              { name: 'Parsing CVs into structured fields', effortHours: 1.2, savingsPct: 80 },
+              { name: 'Normalizing titles/skills', effortHours: 0.8, savingsPct: 70 },
+              { name: 'Deduplication & profile merging', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Data quality checks', effortHours: 1, savingsPct: 60 }
             ]
           },
           {
-            key: 'prescreen', name: 'Pre-Screen Automation', description: 'Automate early candidate filtering via questionnaires, messaging, and rules-based shortlisting.', enabled: true,
+            key: 'matching', name: 'Candidate Matching', enabled: true, totalHours: 3,
             subModules: [
-              { name: 'Automated pre-screening questionnaires', description: 'Collect structured responses to knockout and preference questions with dynamic branching logic.', effortHours: 2.0, savingsPct: 75 },
-              { name: 'Auto-email/SMS invitations to complete pre-screen', description: 'Send personalized invitations and reminders to complete pre-screening steps with follow-up sequences.', effortHours: 1.0, savingsPct: 85 },
-              { name: 'AI sentiment/response analysis of candidate answers', description: 'Evaluate answers for clarity, confidence, and risk signals using natural language processing.', effortHours: 1.5, savingsPct: 80 },
-              { name: 'Auto-shortlisting based on criteria', description: 'Advance or reject candidates based on configured rules, thresholds, and scoring algorithms.', effortHours: 1.0, savingsPct: 80 }
+              { name: 'Ranking against JD requirements', effortHours: 1.2, savingsPct: 70 },
+              { name: 'Surfacing similar candidates/pools', effortHours: 0.8, savingsPct: 60 },
+              { name: 'Gap analysis vs. must-haves', effortHours: 0.6, savingsPct: 50 },
+              { name: 'Auto-refreshing shortlists', effortHours: 0.4, savingsPct: 80 }
             ]
           },
           {
-            key: 'interview', name: 'Interview Automation', description: 'Streamline interview processes with AI-powered scheduling, identity verification, screening bots, transcription, and fraud detection.', enabled: true,
+            key: 'interview', name: 'Interview Intelligence', enabled: true, totalHours: 2.2,
             subModules: [
-              { name: 'Automated video interview scheduling links', description: 'Generate and send interview links and time slots without back-and-forth email coordination.', effortHours: 0.5, savingsPct: 85 },
-              { name: 'AI-powered identity verification (ID + selfie match)', description: 'Validate candidate identity before interviews using document and biometric verification checks.', effortHours: 1.0, savingsPct: 70 },
-              { name: 'Automated voice/video screening bots', description: 'Run asynchronous voice and video screens for basic competencies and role fit assessment.', effortHours: 1.5, savingsPct: 75 },
-              { name: 'Auto-transcription and scoring of candidate answers', description: 'Transcribe interviews and automatically score answers against competency rubrics and criteria.', effortHours: 2.0, savingsPct: 80 },
-              { name: 'AI-generated technical questions based on JD', description: 'Create tailored question banks and scorecards automatically based on role requirements.', effortHours: 1.0, savingsPct: 70 },
-              { name: 'AI-assisted note-taking & transcription during interviews', description: 'Capture structured notes and action items in real-time during live interview sessions.', effortHours: 4.0, savingsPct: 75 },
-              { name: 'Interview recording & storage in ATS', description: 'Store recordings, transcripts, and metadata automatically in candidate records for future reference.', effortHours: 0.5, savingsPct: 90 },
-              { name: 'AI deepfake detection', description: 'Flag suspicious video interviews using generative AI forgery detection and authenticity indicators.', effortHours: 1.0, savingsPct: 85 },
-              { name: 'Real-time coding test monitoring (plagiarism, AI-assist detection)', description: 'Monitor coding sessions for copied code, AI assistance usage, and suspicious activity patterns.', effortHours: 1.0, savingsPct: 75 },
-              { name: 'Resume standardization: Convert candidate CVs into branded template', description: 'Generate consistent, branded profile formats from various resume styles for easier comparison.', effortHours: 0.5, savingsPct: 80 }
+              { name: 'Interview guides & scorecards', effortHours: 0.8, savingsPct: 60 },
+              { name: 'Suggested questions by JD', effortHours: 0.5, savingsPct: 50 },
+              { name: 'Feedback normalization', effortHours: 0.6, savingsPct: 60 },
+              { name: 'Red-flag detection', effortHours: 0.3, savingsPct: 50 }
             ]
           },
           {
-            key: 'feedback', name: 'Feedback & Evaluation Automation', description: 'Automate feedback collection, evaluation scoring, and sentiment analysis to accelerate decision-making processes.', enabled: true,
+            key: 'scheduling', name: 'Scheduling & Orchestration', enabled: true, totalHours: 4,
             subModules: [
-              { name: 'Auto-structured feedback forms submitted to interviewers', description: 'Distribute standardized feedback forms and collect structured evaluations for consistent scoring.', effortHours: 1.5, savingsPct: 80 },
-              { name: 'Automated candidate evaluation scoring templates', description: 'Normalize scoring with role-specific rubrics, weightings, and standardized evaluation criteria.', effortHours: 1.0, savingsPct: 75 },
-              { name: 'Automated feedback requests to panel members', description: 'Trigger feedback requests automatically after interviews with personalized instructions and deadlines.', effortHours: 0.8, savingsPct: 85 },
-              { name: 'Auto-reminders for pending feedback', description: 'Send automated nudges to interviewers to complete overdue reviews and maintain evaluation timelines.', effortHours: 0.5, savingsPct: 90 },
-              { name: 'Aggregated feedback dashboards', description: 'Consolidate panel feedback to highlight consensus, gaps, and decision-ready candidate assessments.', effortHours: 0.4, savingsPct: 80 },
-              { name: 'AI sentiment analysis of written feedback', description: 'Detect tone and risk signals in free-text feedback to identify potential bias or concerns.', effortHours: 0.3, savingsPct: 70 }
+              { name: 'Multi-participant coordination', effortHours: 1.5, savingsPct: 80 },
+              { name: 'Time-zone handling & rescheduling', effortHours: 1, savingsPct: 80 },
+              { name: 'Automated reminders & prep emails', effortHours: 0.8, savingsPct: 70 },
+              { name: 'Room/VC setup & conflicts', effortHours: 0.4, savingsPct: 70 },
+              { name: 'Post-interview follow-ups', effortHours: 0.3, savingsPct: 60 }
             ]
           },
           {
-            key: 'compliance', name: 'Compliance & Risk Review', description: 'Reduce legal and fraud risk with automated checks, consent flows, and compliance visibility.', enabled: true,
+            key: 'jobpost', name: 'Job Post Processing', enabled: true, totalHours: 2.2,
             subModules: [
-              { name: 'Automated background check integrations (ID, criminal, education, etc.).', description: 'Trigger and track vendor background checks for identity, criminal history, and education verification within the workflow.', effortHours: 1.5, savingsPct: 80 },
-              { name: 'Cross-checking social media / public profiles for risks', description: 'Surface potential red flags from public sources according to company policy and risk assessment criteria.', effortHours: 1.0, savingsPct: 80 },
-              { name: 'Auto GDPR/consent form distribution & collection', description: 'Collect candidate consent and manage data rights automatically with compliant documentation and tracking.', effortHours: 1.0, savingsPct: 80 },
-              { name: 'Compliance status tracking dashboards', description: 'Centralize status of background checks, required documents, and data retention compliance in one view.', effortHours: 0.3, savingsPct: 80 },
-              { name: 'Auto-alerts for missing documents', description: 'Notify stakeholders when required compliance items are missing, expired, or approaching deadlines.', effortHours: 0.2, savingsPct: 90 }
+              { name: 'JD drafting from intake notes', effortHours: 1, savingsPct: 70 },
+              { name: 'Tone/brand & readability checks', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Channel-ready variants', effortHours: 0.5, savingsPct: 70 },
+              { name: 'SEO/keyword optimization', effortHours: 0.2, savingsPct: 50 }
             ]
           },
           {
-            key: 'scheduling', name: 'Scheduling Automation', description: 'Streamline interview scheduling with automated calendar integration, availability matching, and reminder management.', enabled: true,
+            key: 'reporting', name: 'Reporting & Predictive Insights', enabled: true, totalHours: 1.5,
             subModules: [
-              { name: 'Calendar integration (Google/Outlook) with auto-time slot suggestions', description: 'Sync with calendar systems to suggest available time slots and automatically block interview times.', effortHours: 1.5, savingsPct: 80 },
-              { name: 'Auto-sending invites with interview links (Teams)', description: 'Generate and send calendar invites with video conference links and meeting details automatically.', effortHours: 0.8, savingsPct: 85 },
-              { name: 'Interviewer availability matching', description: 'Cross-reference multiple interviewer calendars to find optimal meeting times and panel availability.', effortHours: 1.2, savingsPct: 80 },
-              { name: 'Automated reminders to candidates and interviewers', description: 'Send timely reminders with preparation materials and meeting details to all participants.', effortHours: 0.5, savingsPct: 90 }
+              { name: 'KPI dashboards', effortHours: 0.5, savingsPct: 60 },
+              { name: 'Productivity analytics', effortHours: 0.3, savingsPct: 60 },
+              { name: 'Funnel drop-off analysis', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Cost per hire/source calcs', effortHours: 0.2, savingsPct: 60 },
+              { name: 'SLA alerts & trendlines', effortHours: 0.5, savingsPct: 50 }
             ]
           },
           {
-            key: 'onboarding', name: 'Offer Conversion & Onboarding Automation', description: 'Maximize offer acceptance and Day-1 readiness through automated contracts, provisioning, and engagement.', enabled: true,
+            key: 'compliance', name: 'Compliance & Risk Review', enabled: true, totalHours: 1.5,
             subModules: [
-              { name: 'Auto-generation of offer letters/contracts', description: 'Create compliant offer letters and contracts automatically from templates and candidate data.', effortHours: 0.8, savingsPct: 80 },
-              { name: 'E-signature integration', description: 'Route documents for digital signature and track completion status through integrated platforms.', effortHours: 0.5, savingsPct: 85 },
-              { name: 'Automated personalized rejections', description: 'Send courteous, templated rejection emails with optional feedback and future opportunity notifications.', effortHours: 2.0, savingsPct: 80 },
-              { name: 'Offer simulation calculator (net-salary calculation by location)', description: 'Simulate take-home pay with taxes and benefits by location for transparent and competitive offers.', effortHours: 0.5, savingsPct: 85 },
-              { name: 'Auto-generation of onboarding checklists', description: 'Create tailored pre-boarding and Day-1 task lists based on role, location, and department requirements.', effortHours: 0.8, savingsPct: 75 },
-              { name: 'Pre-boarding email sequences (welcome pack, company info)', description: 'Send welcome materials, company policies, and introductory content before the start date automatically.', effortHours: 0.8, savingsPct: 80 },
-              { name: 'Auto-setup of accounts & access', description: 'Trigger IT provisioning workflows for systems, devices, permissions, and access management automatically.', effortHours: 1.0, savingsPct: 75 },
-              { name: 'Onboarding tracking dashboards', description: 'Monitor completion rates and identify blockers across new-hire tasks and integration milestones.', effortHours: 0.3, savingsPct: 80 },
-              { name: 'Auto-introduction bot in Slack/Teams', description: 'Announce new joiners and share profiles with the team automatically through messaging platforms.', effortHours: 0.2, savingsPct: 90 },
-              { name: 'Gamified new-hire checklist', description: 'Motivate completion through points, badges, and progress tracking for engagement and retention.', effortHours: 0.1, savingsPct: 65 }
+              { name: 'Bias language detection', effortHours: 0.6, savingsPct: 70 },
+              { name: 'GDPR/EEOC checks', effortHours: 0.3, savingsPct: 60 },
+              { name: 'Audit trails', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Offer/comms compliance', effortHours: 0.3, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'forecast', name: 'Forecasting & Volume Simulation', enabled: true, totalHours: 1,
+            subModules: [
+              { name: 'Demand simulations', effortHours: 0.3, savingsPct: 50 },
+              { name: 'Capacity planning', effortHours: 0.2, savingsPct: 60 },
+              { name: 'TTF projections', effortHours: 0.2, savingsPct: 50 },
+              { name: 'Scenario testing', effortHours: 0.2, savingsPct: 50 },
+              { name: 'What-if adoption modeling', effortHours: 0.1, savingsPct: 60 }
+            ]
+          },
+          {
+            key: 'onboarding', name: 'Onboarding Coordination', enabled: true, totalHours: 2,
+            subModules: [
+              { name: 'Document collection', effortHours: 2, savingsPct: 50 },
+              { name: 'Checklists & welcome packs', effortHours: 0.6, savingsPct: 60 },
+              { name: 'Start-date confirmations', effortHours: 0.6, savingsPct: 60 }
             ]
           }
         ],
         showDetails: false
       };
     }
-
-    // Initialize state after function is defined
-    let state = defaultState();
 
     function renderDetails(){
       renderModuleToggles();
@@ -433,12 +489,9 @@
       el.moduleToggles.innerHTML = '';
       state.modules.forEach((module, idx) => {
         const button = document.createElement('button');
-        button.innerHTML = `
-          <div style="margin-bottom: 6px; font-weight: ${module.enabled ? '600' : '500'}; font-size: 14px;">${module.name}</div>
-          <div style="font-size: 12px; opacity: 0.85; line-height: 1.3;">${module.description}</div>
-        `;
+        button.textContent = module.name;
         button.style.cssText = `
-          padding: 14px 16px;
+          padding: 12px 16px;
           border: 2px solid ${module.enabled ? 'var(--accent)' : 'var(--border)'};
           border-radius: 8px;
           background: ${module.enabled ? 'var(--accent)' : 'transparent'};
@@ -448,8 +501,7 @@
           cursor: pointer;
           transition: all 0.2s ease;
           width: 100%;
-          text-align: left;
-          min-height: 80px;
+          text-align: center;
         `;
         
         // Hover effect
@@ -481,16 +533,21 @@
       el.detailedModulesBody.innerHTML = '';
       const R = compute();
       
+      // Calculate total baseline hours from all modules (consistent with compute function)
+      const totalBaselineHours = state.modules.reduce((sum, module) => sum + module.totalHours, 0);
+      
       state.modules.forEach(module => {
         if (!module.enabled) return;
         
-        // Use the module savings percentage calculated in compute function
-        const moduleSavingsPct = R.moduleSavingsPercents[module.key] || 0;
+        const hoursSaved = module.subModules.reduce((sum, sub) => sum + (sub.effortHours * sub.savingsPct / 100), 0);
+        const workloadPct = (module.totalHours / totalBaselineHours) * 100;
+        const savingsPct = (hoursSaved / module.totalHours) * 100;
         
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${module.name}</td>
-          <td>${moduleSavingsPct.toFixed(1)}%</td>
+          <td>${workloadPct.toFixed(1)}%</td>
+          <td>${savingsPct.toFixed(1)}%</td>
           <td style="color:var(--accent)">${fmtCurrency(R.moduleImpacts[module.key] || 0, state.currency)}</td>
         `;
         el.detailedModulesBody.appendChild(tr);
@@ -509,10 +566,9 @@
         let subModuleRows = '';
         module.subModules.forEach(sub => {
           const timeSaved = sub.effortHours * sub.savingsPct / 100;
-          const description = sub.description ? `<br><small style="color:var(--muted);font-style:italic;line-height:1.2">${sub.description}</small>` : '';
           subModuleRows += `
             <tr>
-              <td style="padding-left:20px">${sub.name}${description}</td>
+              <td style="padding-left:20px">${sub.name}</td>
               <td>${sub.effortHours.toFixed(1)} hrs</td>
               <td>${sub.savingsPct}%</td>
               <td>${timeSaved.toFixed(1)} hrs</td>
@@ -521,8 +577,7 @@
         });
         
         moduleDiv.innerHTML = `
-          <h4 style="margin:0 0 4px 0;color:var(--accent)">${module.name}</h4>
-          <p style="margin:0 0 12px 0;color:var(--muted);font-size:12px;line-height:1.3;">${module.description}</p>
+          <h4 style="margin:0 0 8px 0;color:var(--accent)">${module.name}</h4>
           <table style="width:100%;font-size:11px">
             <thead>
               <tr style="background:var(--bg)">
@@ -544,13 +599,12 @@
     function compute(){
       const s = state;
       
-      // Calculate hourly rate from cost structure (used throughout calculations)
-      const hourlyRate = s.totalTimePerPosition > 0 ? s.baseCostPerHire / s.totalTimePerPosition : 0;
+      // Calculate baseline total workload hours from ALL modules (regardless of enabled status)
+      const totalWorkloadHours = s.modules.reduce((sum, module) => sum + module.totalHours, 0);
       
       // Calculate time savings only from ENABLED modules
       let totalHoursSaved = 0;
       let moduleImpacts = {};
-      let moduleSavingsPercents = {};
       
       s.modules.forEach(module => {
         // Calculate module's potential hours saved
@@ -558,39 +612,36 @@
           return sum + (sub.effortHours * sub.savingsPct / 100);
         }, 0);
         
-        // Calculate module savings percentage based on total time per position
-        const moduleSavingsPct = s.totalTimePerPosition > 0 ? (moduleHoursSaved / s.totalTimePerPosition) * 100 : 0;
-        moduleSavingsPercents[module.key] = moduleSavingsPct;
-        
         if (module.enabled) {
           // Only add to total savings if module is enabled
           totalHoursSaved += moduleHoursSaved;
           
           // Calculate cost impact per module (time savings value)
-          moduleImpacts[module.key] = moduleHoursSaved * hourlyRate * s.annualVolume;
+          const estimatedHourSavingsValue = 50; // €50 per hour saved
+          moduleImpacts[module.key] = moduleHoursSaved * estimatedHourSavingsValue * s.annualVolume;
         } else {
           // Module is disabled, no savings or impact
           moduleImpacts[module.key] = 0;
         }
       });
       
-      // Calculate metrics based on total time per position
-      const workloadReductionPct = s.totalTimePerPosition > 0 ? (totalHoursSaved / s.totalTimePerPosition) * 100 : 0;
+      // Calculate metrics
+      const workloadReductionPct = totalWorkloadHours > 0 ? (totalHoursSaved / totalWorkloadHours) * 100 : 0;
       const hoursSavedPerHire = totalHoursSaved;
       
       // Time-to-fill calculations (use workload reduction % to determine TTF improvement)
-      const ttfImprovementPct = workloadReductionPct * 0.2; // 20% of workload reduction translates to TTF improvement
+      const ttfImprovementPct = workloadReductionPct * 0.5; // 50% of workload reduction translates to TTF improvement
       const daysSavedPerHire = (ttfImprovementPct / 100) * s.avgTTF;
       const automatedTimeToClose = Math.max(1, s.avgTTF - daysSavedPerHire);
       
       // Cost per hire calculations (use workload reduction % to determine cost impact)
       const manualCostPerHire = s.baseCostPerHire;
-      const costReductionPct = workloadReductionPct * 0.6; // 60% of workload reduction translates to cost reduction
+      const costReductionPct = workloadReductionPct * 0.3; // 30% of workload reduction translates to cost reduction
       const automatedCostPerHire = manualCostPerHire * (1 - costReductionPct / 100);
       
       // Annual savings calculation (based on time savings value)
-      const timeSavingsValuePerHire = totalHoursSaved * hourlyRate;
-      const annualTimeSavings = s.annualVolume * manualCostPerHire * costReductionPct / 100;
+      const timeSavingsValuePerHire = totalHoursSaved * 50; // €50 per hour saved
+      const annualTimeSavings = s.annualVolume * timeSavingsValuePerHire;
       
       // Proper ROI calculation: ROI = ((Benefits - Investment) / Investment) * 100
       const investmentCost = s.platformCostAnnual; // Annual platform cost
@@ -615,7 +666,7 @@
         paybackMonths,
         investmentCost,
         moduleImpacts,
-        moduleSavingsPercents,
+        totalWorkloadHours,
         totalHoursSaved
       };
     }
@@ -625,7 +676,7 @@
       const cur = state.currency;
 
       // Main ROI Display
-      el.roiPct.textContent = R.roiPct.toFixed(0) + '%';
+      el.roiPct.textContent = R.roiPct.toFixed(0);
       el.annualSavings.textContent = fmtCurrency(R.annualSavings, cur);
       el.investmentCost.textContent = fmtCurrency(R.investmentCost, cur);
       el.paybackMonths.textContent = R.paybackMonths.toFixed(1);
@@ -650,7 +701,6 @@
     // Init
     setInputsFromState();
     attachInputHandlers();
-    toggleAdminSections();
     render();
   </script>
 </body>
