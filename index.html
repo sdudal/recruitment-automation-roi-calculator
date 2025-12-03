@@ -718,8 +718,8 @@
               <ul>
                 <li>Processing ~30 applications per position</li>
                 <li>Conducting ~5 interviews on average per position</li>
-                <li>Time-to-fill reduction is 20% from automation efficiency gains</li>
-                <li>60% of workload reduction translates to cost reduction</li>
+                <li>Time-to-fill reduction is 30% from automation efficiency gains</li>
+                <li>50% of workload reduction translates to cost reduction</li>
                 <li>Hourly rate calculated as: Base cost per hire ÷ Total time per position</li>
               </ul>
           </div>
@@ -989,7 +989,7 @@
         annualVolume: 100,
         avgTTF: 36,
         baseCostPerHire: 4000,
-        platformCostAnnual: 50000,
+        platformCostAnnual: 10000,
         totalTimePerPosition: 50,
         adminMode: false,
         modules: [
@@ -1253,13 +1253,13 @@
       const hoursSavedPerHire = totalHoursSaved;
       
       // Time-to-fill calculations (use workload reduction % to determine TTF improvement)
-      const ttfImprovementPct = workloadReductionPct * 0.2; // 20% of workload reduction translates to TTF improvement
+      const ttfImprovementPct = workloadReductionPct * 0.3; // 20% of workload reduction translates to TTF improvement
       const daysSavedPerHire = (ttfImprovementPct / 100) * s.avgTTF;
       const automatedTimeToClose = Math.max(1, s.avgTTF - daysSavedPerHire);
       
       // Cost per hire calculations (use workload reduction % to determine cost impact)
       const manualCostPerHire = s.baseCostPerHire;
-      const costReductionPct = workloadReductionPct * 0.6; // 60% of workload reduction translates to cost reduction
+      const costReductionPct = workloadReductionPct * 0.5; // 60% of workload reduction translates to cost reduction
       const automatedCostPerHire = manualCostPerHire * (1 - costReductionPct / 100);
       
       // Annual savings calculation (based on time savings value)
